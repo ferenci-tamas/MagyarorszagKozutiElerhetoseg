@@ -338,7 +338,7 @@ durationsLongPop <- merge(durationsLong[, .(Var1, Helység.megnevezése = Var2, 
                           sort = FALSE)[, .(Var1, Helység.megnevezése, Duration, Pop = Lakó.népesség)]
 
 ggplot(durationsLongPop[Var1=="Csobád"], aes(x = Duration, weights = Pop)) +
-  StatCompLab::stat_ewcdf(geom = "step", pad = FALSE) +
+  halfmoon::geom_ecdf(geom = "step", pad = FALSE) +
   scale_y_continuous(label = scales::percent,
                      sec.axis = sec_axis(~ . * sum(HNTdata$Lakó.népesség),
                                          name = "Elért lakosok száma [fő]",
@@ -351,7 +351,7 @@ Ez az ábra ráadásul nagyon jól összehasonlíthatóvá teszi a települések
 ```{r}
 ggplot(durationsLongPop[Var1%in%c("Csobád", "Budapest 01. kerület")],
        aes(x = Duration, weights = Pop, group = Var1, color = Var1)) +
-  StatCompLab::stat_ewcdf(geom = "step", pad = FALSE) +
+  halfmoon::geom_ecdf(geom = "step", pad = FALSE) +
   scale_y_continuous(label = scales::percent,
                      sec.axis = sec_axis(~ . * sum(HNTdata$Lakó.népesség),
                                          name = "Elért lakosok száma [fő]",
@@ -367,7 +367,7 @@ Végezetül, ha nagyon belelendülünk, akkor akár azt is megtehetjük, hogy ez
 ```{r}
 ggplot(durationsLongPop,
        aes(x = Duration, weights = Pop, group = Var1)) +
-  StatCompLab::stat_ewcdf(geom = "step", pad = FALSE, alpha = 0.01) +
+  halfmoon::geom_ecdf(geom = "step", pad = FALSE, alpha = 0.01) +
   scale_y_continuous(label = scales::percent,
                      sec.axis = sec_axis(~ . * sum(HNTdata$Lakó.népesség),
                                          name = "Elért lakosok száma [fő]",
@@ -526,7 +526,7 @@ if(!file.exists("korhazplots.rds")) {
 korhazbars <- lapply(1:length(LocationResult), function(k)
   ggplot(data.frame(y = sapply(LocationResult, function(x) x$obj/sum(HNTdata$Lakó.népesség))[k]),
          aes(y = y, x = 1)) + geom_col() + scale_y_continuous(limits = c(0, 2)) +
-    theme(axis.text.x=element_blank(), axis.ticks.x=element_blank(),
+    theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(),
           panel.grid.major.x = element_blank(),
           panel.grid.minor.x = element_blank(),) +
     labs(x = "", y = "Összesített átlagos eljutási idő [h]"))

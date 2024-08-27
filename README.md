@@ -228,129 +228,218 @@ kableExtra::column_spec(knitr::kable(durations[1:5, 1:5], format = "html"), 1, b
 ```
 
 <table>
+
 <thead>
+
 <tr>
+
 <th style="text-align:left;">
+
 </th>
+
 <th style="text-align:right;">
+
 Aba
 </th>
+
 <th style="text-align:right;">
+
 Abádszalók
 </th>
+
 <th style="text-align:right;">
+
 Abaliget
 </th>
+
 <th style="text-align:right;">
+
 Abasár
 </th>
+
 <th style="text-align:right;">
+
 Abaújalpár
 </th>
+
 </tr>
+
 </thead>
+
 <tbody>
+
 <tr>
+
 <td style="text-align:left;font-weight: bold;">
+
 Aba
 </td>
+
 <td style="text-align:right;">
+
 0.000000
 </td>
+
 <td style="text-align:right;">
+
 2.918028
 </td>
+
 <td style="text-align:right;">
+
 2.219889
 </td>
+
 <td style="text-align:right;">
+
 2.084722
 </td>
+
 <td style="text-align:right;">
+
 3.471139
 </td>
+
 </tr>
+
 <tr>
+
 <td style="text-align:left;font-weight: bold;">
+
 Abádszalók
 </td>
+
 <td style="text-align:right;">
+
 2.872611
 </td>
+
 <td style="text-align:right;">
+
 0.000000
 </td>
+
 <td style="text-align:right;">
+
 4.668250
 </td>
+
 <td style="text-align:right;">
+
 1.551722
 </td>
+
 <td style="text-align:right;">
+
 2.243694
 </td>
+
 </tr>
+
 <tr>
+
 <td style="text-align:left;font-weight: bold;">
+
 Abaliget
 </td>
+
 <td style="text-align:right;">
+
 2.215917
 </td>
+
 <td style="text-align:right;">
+
 4.693556
 </td>
+
 <td style="text-align:right;">
+
 0.000000
 </td>
+
 <td style="text-align:right;">
+
 3.940139
 </td>
+
 <td style="text-align:right;">
+
 5.326556
 </td>
+
 </tr>
+
 <tr>
+
 <td style="text-align:left;font-weight: bold;">
+
 Abasár
 </td>
+
 <td style="text-align:right;">
+
 2.079500
 </td>
+
 <td style="text-align:right;">
+
 1.548000
 </td>
+
 <td style="text-align:right;">
+
 3.931167
 </td>
+
 <td style="text-align:right;">
+
 0.000000
 </td>
+
 <td style="text-align:right;">
+
 1.980611
 </td>
+
 </tr>
+
 <tr>
+
 <td style="text-align:left;font-weight: bold;">
+
 Abaújalpár
 </td>
+
 <td style="text-align:right;">
+
 3.468972
 </td>
+
 <td style="text-align:right;">
+
 2.248750
 </td>
+
 <td style="text-align:right;">
+
 5.320639
 </td>
+
 <td style="text-align:right;">
+
 1.975000
 </td>
+
 <td style="text-align:right;">
+
 0.000000
 </td>
+
 </tr>
+
 </tbody>
+
 </table>
 
 Ez természetesen csak egy pici részlet; az egész mátrixnak 3177 sora, és
@@ -952,7 +1041,7 @@ durationsLongPop <- merge(durationsLong[, .(Var1, Helység.megnevezése = Var2, 
                           sort = FALSE)[, .(Var1, Helység.megnevezése, Duration, Pop = Lakó.népesség)]
 
 ggplot(durationsLongPop[Var1=="Csobád"], aes(x = Duration, weights = Pop)) +
-  StatCompLab::stat_ewcdf(geom = "step", pad = FALSE) +
+  halfmoon::geom_ecdf(geom = "step", pad = FALSE) +
   scale_y_continuous(label = scales::percent,
                      sec.axis = sec_axis(~ . * sum(HNTdata$Lakó.népesség),
                                          name = "Elért lakosok száma [fő]",
@@ -969,7 +1058,7 @@ emlegetett, központi elhelyezkedésű budapesti 1. kerülettel:
 ``` r
 ggplot(durationsLongPop[Var1%in%c("Csobád", "Budapest 01. kerület")],
        aes(x = Duration, weights = Pop, group = Var1, color = Var1)) +
-  StatCompLab::stat_ewcdf(geom = "step", pad = FALSE) +
+  halfmoon::geom_ecdf(geom = "step", pad = FALSE) +
   scale_y_continuous(label = scales::percent,
                      sec.axis = sec_axis(~ . * sum(HNTdata$Lakó.népesség),
                                          name = "Elért lakosok száma [fő]",
@@ -995,7 +1084,7 @@ ritkábban:
 ``` r
 ggplot(durationsLongPop,
        aes(x = Duration, weights = Pop, group = Var1)) +
-  StatCompLab::stat_ewcdf(geom = "step", pad = FALSE, alpha = 0.01) +
+  halfmoon::geom_ecdf(geom = "step", pad = FALSE, alpha = 0.01) +
   scale_y_continuous(label = scales::percent,
                      sec.axis = sec_axis(~ . * sum(HNTdata$Lakó.népesség),
                                          name = "Elért lakosok száma [fő]",
@@ -1360,7 +1449,7 @@ if(!file.exists("korhazplots.rds")) {
 korhazbars <- lapply(1:length(LocationResult), function(k)
   ggplot(data.frame(y = sapply(LocationResult, function(x) x$obj/sum(HNTdata$Lakó.népesség))[k]),
          aes(y = y, x = 1)) + geom_col() + scale_y_continuous(limits = c(0, 2)) +
-    theme(axis.text.x=element_blank(), axis.ticks.x=element_blank(),
+    theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(),
           panel.grid.major.x = element_blank(),
           panel.grid.minor.x = element_blank(),) +
     labs(x = "", y = "Összesített átlagos eljutási idő [h]"))
