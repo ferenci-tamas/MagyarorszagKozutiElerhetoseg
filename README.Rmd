@@ -13,16 +13,27 @@ editor_options:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, fig.width = 16/3*2, fig.height = 9/3*2, dpi = 300, dev = "ragg_png")
+knitr::opts_chunk$set(echo = TRUE, fig.width = 16/3*2, fig.height = 9/3*2, dpi = 300,
+                      dev = "ragg_png")
 library(data.table)
 library(ggplot2)
 theme_set(theme_bw())
 theme_update(plot.caption = element_text(face = "bold", hjust = 0))
 library(sf)
 set.seed(1)
-locs <- readRDS("locs.rds")
-geodata <- readRDS("geodata.rds")
-HNTdata <- readRDS("HNTdata.rds")
+locs <- readRDS("./data/locs.rds")
+geodata <- readRDS("./data/geodata.rds")
+if (!file.exists("./data/hnt_letoltes_2022.xlsx"))
+  download.file("https://www.ksh.hu/docs/helysegnevtar/hnt_letoltes_2022.xlsx",
+                "./data/hnt_letoltes_2022.xlsx", mode = "wb")
+HNTdata <- readxl::read_excel("./data/hnt_letoltes_2022.xlsx", .name_repair = "universal",
+                              skip = 2)
+HNTdata <- HNTdata[!HNTdata$Helység.megnevezése%in%c("Összesen", "Budapest"),]
+HNTdata$Helység.megnevezése <- ifelse(grepl("Budapest", HNTdata$Helység.megnevezése),
+                                      paste0(substring(HNTdata$Helység.megnevezése, 1,
+                                                       nchar(HNTdata$Helység.megnevezése)-1),
+                                             "ület"),
+                                      HNTdata$Helység.megnevezése)
 JarasInd <- (HNTdata$Helység.megnevezése==HNTdata$Járás.székhelye)|(HNTdata$Megye.megnevezése=="főváros")
 captionlab <- paste0("Ferenci Tamás, http://www.medstat.hu/\nhttps://github.com/tamas-ferenci/",
                      "MagyarorszagKozutiElerhetoseg")
@@ -73,7 +84,7 @@ Minden számítást az [R statisztikai környezet](https://www.youtube.com/c/Fer
 Ha megtervezzük az útvonalat az összes lehetséges településpár között, akkor lényegében egy mátrixot kapunk, matematikai szóval élve. Ezeknek csakugyan van [szép matematikája](https://www.youtube.com/playlist?list=PLqdN24UCw5hl4sGgGrw0LLdT3GyshM_BW), de a mostani céljainkra túlnyomó többségében az is elég lesz, ha egyszerűen számok négyzet alakban elrendezett táblázataként gondolunk rá, ahol egy adott szám megadja, hogy a sorában szereplő településből mennyi idő alatt lehet eljutni az oszlopában szereplő településhez. Pont mint az autóstérképek végében szokott lenni. Olvassuk is be az adatokat, konvertáljuk az időtartamokat órába, mert eredetileg másodpercben van, az OSRM így szolgáltatja, és nézzük is meg egy kis részletét ennek a mátrixnak (táblázatnak):
 
 ```{r}
-durations <- fread("osrmdurations.csv")
+durations <- fread("./data/osrmdurations.csv")
 durations <- as.matrix(durations)
 rownames(durations) <- colnames(durations) <- locs$NAME
 durations <- durations/60/60
@@ -94,13 +105,14 @@ durationsLong$Var2 <- as.character(levels(durationsLong$Var2))[durationsLong$Var
 durationsSymmLong <- as.data.table(reshape2::melt(durationsSymm, value.name = "Duration"))
 durationsSymmLong$Var1 <- as.character(levels(durationsSymmLong$Var1))[durationsSymmLong$Var1]
 durationsSymmLong$Var2 <- as.character(levels(durationsSymmLong$Var2))[durationsSymmLong$Var2]
-saveRDS(durationsSymmLong, "durationsSymmLong.rds")
-fwrite(durationsLong, "durationsLong.csv", dec = ",", sep = ";", bom = TRUE)
-if(!file.exists("durationsLong.zip")) zip("durationsLong.zip", "durationsLong.csv")
+saveRDS(durationsSymmLong, "./data/durationsSymmLong.rds")
+fwrite(durationsLong, "./data/durationsLong.csv", dec = ",", sep = ";", bom = TRUE)
+if(!file.exists("./data/durationsLong.zip")) zip("./data/durationsLong.zip",
+                                                    "./data/durationsLong.csv")
 knitr::kable(head(durationsLong))
 ```
 
-Az adatállomány [ezen a linken](durationsLong.zip) külön is elérhetővé tettem tömörített CSV formátumban, hogy bárki tetszőleges saját elemzéshez is felhasználhassa.
+Az adatállomány [ezen a linken](./data/durationsLong.zip) külön is elérhetővé tettem tömörített CSV formátumban, hogy bárki tetszőleges saját elemzéshez is felhasználhassa.
 
 Most már nekiállhatunk a munkának! Első feladatként nézzük meg, hogy milyen messze vannak (menetidőben) a magyar települések egy bizonyos ponttól; legyen ez Budapest, 1. kerület (ha már a 0 kilométerkő itt van):
 
@@ -145,11 +157,11 @@ p <- ggplot(bpcontour, aes(x = X, y = Y)) + geom_raster(aes(fill = Duration)) +
   labs(x = "", y = "", fill = "Eljutási idő [h]", caption = captionlab) +
   metR::scale_x_longitude(ticks = 1, expand = waiver()) +
   metR::scale_y_latitude(ticks = 0.5, expand = waiver())
-ggsave("BudapestKozutiEljutasiIdo.pdf", p, width = 16, height = 9, device = cairo_pdf)
+ggsave("./data/BudapestKozutiEljutasiIdo.pdf", p, width = 16, height = 9, device = cairo_pdf)
 p
 ```
 
-Ha egy szubjektív kiszólást tehetek, ez az ábra szerintem önmagában is szép: mint ahogy az erek hálózzák be a testet. (Ha más is így gondolná, letöltheti jó minőségű [PDF formátumban](https://raw.githubusercontent.com/tamas-ferenci/MagyarorszagKozutiElerhetoseg/main/BudapestKozutiEljutasiIdo.pdf) is ugyanezt az ábrát!)
+Ha egy szubjektív kiszólást tehetek, ez az ábra szerintem önmagában is szép: mint ahogy az erek hálózzák be a testet. (Ha más is így gondolná, letöltheti jó minőségű [PDF formátumban](https://raw.githubusercontent.com/tamas-ferenci/MagyarorszagKozutiElerhetoseg/main/data/BudapestKozutiEljutasiIdo.pdf) is ugyanezt az ábrát!)
 
 Mindazonáltal az ábra még tovább is fejleszthető. Vegyünk most egy másik települést példának, a Borsod-Abaúj-Zemplén megyei [Csobádot](https://hu.wikipedia.org/wiki/Csob%C3%A1d). Az előbbi ábrát egészítsük ki egy ponttal, ahol a település van, de ami még fontosabb: jelöljük meg azokat a pontokat, amelyek adott időn belül, például 1 órán belül, 2 órán belül stb. elérhetőek a vizsgált településünkből. E területek határát szokás izokrón görbének nevezni (kb. azonos idő alatt elérhető): adott idő alatt eddig lehet eljutni a településből. Avagy, fordítva megfogalmazva -- minthogy a dolog szimmetrikus -- innen lehet adott idő alatt eljutni a településre. Technikailag egy dologra kell figyelni, ez pedig az, hogy az eredeti interpoláció nagyon finom térbeli felbontású, ami jó, hiszen ettől szép sima a térkép, viszont most nem szerencsés, mert ha ez alapján húzzuk meg ezeket a kontúrvonalakat, akkor azok nagyon szaggatottak lesznek, hiszen ide-oda fog ugrálni, hogy pontosan hol van az 1 óra határa (és a finom felbontás miatt ezt jól tudja követni). Úgyhogy ehhez érdemes egy durvább felbontású interpolációt készíteni, és az alapján behúzni az izokrón vonalakat:
 
@@ -260,17 +272,17 @@ Az eredményeket egy külön oldalon (a település nevének első betűje szeri
 
 Talán érdekes egy pillanatra kitérni az izokrón térképek történetének néhány fejezetére is. Az első ilyet Sir Francis Galton [konstruálta](https://www.jstor.org/stable/1800138) (igen, az a Galton, lásd Galton-deszka, Galton-Watson folyamat) 1881-ben. Nagyon tanulságos megnézni, alul láthatóak az időigények, a térkép London bázissal készült:
 
-![Francis Galton izokrón térképe 1881-ből](Isochronic_Passage_Chart_Francis_Galton_1881.jpg)
+![Francis Galton izokrón térképe 1881-ből](./files/Isochronic_Passage_Chart_Francis_Galton_1881.jpg)
 
 Érdekes módon Magyarországról sem sokkal később készült izokrón térkép! Albrecht Penck német térképész 1887-ben [közzétette](https://books.google.hu/books?id=tYFQAAAAYAAJ&pg=337#v=onepage&q&f=false) Isochronenkarte der österreichisch-ungarischen Monarchie című cikkét, melynek [térképmelléklete](https://www.deutsche-digitale-bibliothek.de/item/QTOJ6BEYSYYTJJD7DD6ZZMCJ4CEH2PQF) a vasúton történő eljutás izokrón görbéit tartalmazta a Monarchián belül, többek között Budapest (azaz Buda-Pest) központtal is.
 
 1914-ben John G. Bartholomew publikálta izokrón térképének új kiadását (ugyanis már korábban is készített ilyet), szintén London középponttal:
 
-![John G. Bartholomew izokrón térképe 1914-ből](1115IL_PL_CAR_01-web-header-v2.jpg)
+![John G. Bartholomew izokrón térképe 1914-ből](./files/1115IL_PL_CAR_01-web-header-v2.jpg)
 
 A dolgot csak azért említem meg, mert egy izgalmas projekt [azt célozta meg](https://www.rome2rio.com/blog/2016/01/08/time-flies-according-to-these-maps-it-does/) 2016-ban, azaz nagyjából 90 évvel később, hogy újraalkosson egy pontosan ugyanilyen stílusú és kinézetű térképet -- csak épp az aktuális közlekedési lehetőségek mellett. [Nem minden nehézség nélkül](https://www.rome2rio.com/blog/2016/02/09/a-map-goes-unexpectedly-viral-with-help-from-reddit-gizmodo/), de megoldották a feladatot, íme az eredmény:
 
-![A Rome2Rio izokrón térképe 2016-ból](world-map-isochronic-2016.jpg)
+![A Rome2Rio izokrón térképe 2016-ból](./files/world-map-isochronic-2016.jpg)
 
 A dolog egyébként olyan sikert aratott, hogy egy térképgyártó felkarolta, úgyhogy ha valaki szeretné, a mai napig [rendelhet magának](https://www.wellingtonstravel.com/isochronic-map.html) ilyen térképet a szobája falára, e pillanatban a papírra nyomott 90 x 60 cm-es térkép 70 angol fontba kerül.
 
@@ -280,7 +292,7 @@ A Budapesti Hírlap 1912. február 17-én kelt száma például [beszámol arró
 
 Kicsit előbbre ugorva, 1917-ből már térképként rajzolt hazai izokrónt is találunk: a Bátky Zsigmond szerkesztette "Zsebatlasz naptárral és statisztikai adatokkal az 1918. évre" (Magyar Földrajzi Intézet R-T. 1917) [közli](https://epa.oszk.hu/02300/02389/00002/pdf/) Kogutowicz Károly "Hazánk izokrón-térképei" című [írását](https://epa.oszk.hu/02300/02389/00002/pdf/EPA02389_zsebatlasz_1918_130.pdf), mely vasúti eljutás alapján közöl izokrónokat. Például a tényleges menetrenden alapuló, de a legnagyobb elérhető sebesség alapján számolt térkép így néz ki:
 
-![Kogutowicz Károly izokrón térkép 1917-ből](Kogutowicz1918.png)
+![Kogutowicz Károly izokrón térkép 1917-ből](./files/Kogutowicz1918.png)
 
 (Fellelnem nem sikerült, de [úgy tűnik](https://adt.arcanum.com/hu/view/FoldrajziKozlemenyek_1913/?pg=158&layout=s) hogy ezt már az 1913-as zsebatlasz is tartalmazta.)
 
@@ -288,7 +300,7 @@ Az 1930-as évekből aztán már mindenféle specializált térképet is lehet t
 
 Végezetül megjegyzem, hogy léteznek "visszamenőleges" izokrón térképek is: Czére Béla egy 1991-es [közleményében](http://real-j.mtak.hu/9989/7/Kozlekedestudomanyi_1991_07.pdf) 1847-ig visszamenő időpontokra vonatkozóan szerkesztett magyar izokrón-térképeket, az egykorú menetrendek és jármű-paraméterek alapján. Így néz ki például az 1867-es évre rekonstruált budapesti bázisú izokrón térkép:
 
-![Czére Béla rekonstruált izokrón térképe 1867-re vonatkozóan](Czere1991.png)
+![Czére Béla rekonstruált izokrón térképe 1867-re vonatkozóan](./files/Czere1991.png)
 
 ## A legtávolibb magyar települések
 
@@ -300,7 +312,7 @@ knitr::kable(durationsLong[which.max(Duration)])
 
 A válasz tehát: Felsőszölnök és Kishódos. Ez a két legtávolabbi magyar település közúton és menetidőről beszélve; majdnem 7 és fél óra az egyikről átjutni a másikra! (Fontos feleleveníteni, hogy ez forgalom nélküli, de szabályokat betartó, gépjárművel történő eljutási idő.) Érdemes ezt az eredményt a biztonság kedvéért más módszerrel is megerősíteni; így néz ki a Google Maps útvonalterve erre a település-párra:
 
-![Felsőszölönök és Kishódos távolsága a Google Maps szerint: 6 óra 10 perc - 8 óra, forgalomtól függően](FelsoszolnokKishodos_GoogleMaps.png)
+![Felsőszölönök és Kishódos távolsága a Google Maps szerint: 6 óra 10 perc - 8 óra, forgalomtól függően](./files/FelsoszolnokKishodos_GoogleMaps.png)
 
 Ezt, amit most kiszámoltunk, a gráfelméletben úgy szokták hívni, hogy mekkora a gráf átmérője. Itt érdemes egy rövid kitérőt tenni. A matematikusok leegyszerűsítve gráfnak neveznek pontokat (ezek szép neve: csúcs), amelyek közül bizonyosak egy vonallal (szép néven: él) vannak összekötve. Az élekhez esetleg számokat is rendelhetünk, melyek az adott összeköttetést jellemzik, szokás ezt néha súlynak is nevezni. Azonnal látszik, hogy ez a matematikai objektum kiválóan megfelel a mostani problémánk leírására, sőt, lényegében közvetlenül alkalmazható: a csúcsok a települések, él pedig azon települések között van, amelyek között el lehet jutni közúton (jelen esetben minden csúcs minden csúccsal össze van kötve, hiszen valahogy minden magyar településről el lehet jutni minden településre), a súly pedig az eljutási idő.
 
@@ -490,7 +502,7 @@ Jelen esetben a célravezető az, ha a problémát átfogalmazzunk matematikai o
 m <- nrow(durations)
 n <- sum(JarasInd)
 
-LocationResult <- readRDS("LocationResult.rds")
+LocationResult <- readRDS("./data/LocationResult.rds")
 
 ggplot(data.frame(n = 1:length(LocationResult), time = sapply(LocationResult, function(x) x$time/60)),
        aes(x = n, y = time)) + geom_point() + geom_line() +
@@ -544,7 +556,7 @@ ggplot(data.frame(n = 1:length(LocationResult),
   labs(x = "Telepített kórházak száma", y = "Súlyozott átlagos elérési idő [h]")
 ```
 
-Az eredményeket a fenti vizualizációkon túl konkrétan is [letölthetővé](https://raw.githubusercontent.com/tamas-ferenci/MagyarorszagKozutiElerhetoseg/main/LocRes.csv) tettem (a pontos futásidőkkel, elérési időkkel, és a településlistákkal).
+Az eredményeket a fenti vizualizációkon túl konkrétan is [letölthetővé](https://raw.githubusercontent.com/tamas-ferenci/MagyarorszagKozutiElerhetoseg/main/data/LocRes.csv) tettem (a pontos futásidőkkel, elérési időkkel, és a településlistákkal).
 
 Megjegyzem, hogy ez egy -- nagyon primitív és végletekig leegyszerűsített, de mégis csak -- példa arra, amit _szükséglet-alapú_ tervezésnek szoktak nevezni: a kórházakat az alapján tervezzük (jelen esetben térben), hogy milyen szükséglet van rájuk (térben). A fenti számítás azért nagyon leegyszerűsített, mert egyéb információ híján a "szükséglet"-et egész egyszerűen a lélekszámmal méri (hiszen ez jelent meg a súlyozásban az átlagolásnál). Ez nem irreális, elvégre ahol többen laknak, ott valószínűleg a kórház igénybevétele is nagyobb, de azért jócskán finomítható lenne: egy diabetológiai osztálynál használhatnánk a cukorbeteg lakosok számát, egy kardiológiai osztálynál a szívbetegek számát, egy gyerekosztálynál csak a gyerekek számát stb. Én most azon egyszerű költői oknál fogva maradtam a lélekszámnál, mert egyedül erre volt megbízható, nyilvános, település-szintű információ. (Esetleg a korcsoportos szűkítéssel lehet játszani, ha erre valaki érez késztetést, ilyen adatok ugyanis letölthetőek település-szinten is a KSH-tól.) Mindenesetre a módszertant ez is demonstrálja -- ezt lehetne használni a komplexebb, szükségletek alapján történő racionális tervezés esetén is.
 
@@ -554,7 +566,7 @@ Megjegyzem, hogy ez egy -- nagyon primitív és végletekig leegyszerűsített, 
 
 Az előbbi grafikon már sejteti erre a választ: akkor azt kapnánk, hogy minden településre (járási székhelyre) kell egy kórházat telepíteni! De ha meggondoljuk, ez az eredmény tökéletesen logikus: ha _kizárólag_ az a célfüggvény, hogy minél jobb legyen az átlagos elérési idő, akkor _tényleg_ az a jó, ha mindenhová építünk egy kórházat! Ezen a ponton muszáj egy pillanatra megállnunk, és ezt a kérdést kicsit közelebbről megvizsgálnunk. A probléma ugyanis első ránézésre csak anyagi: persze, hogy ez az eredmény jött ki, hiszen modellünkben ingyen van a kórház telepítése -- akkor még szép, hogy azt mondja, hogy mindenhová építsünk egyet. Valójában azonban bonyolultabb a helyzet: ha egy jótündér kifizetné az országnak tetszőleges számú kórház megépítését, _akkor sem_ biztos, hogy az lenne a jó ötlet, ha mind a `r nrow(locs)` településre építenénk egy kórházat. Egy [másik írásomban](https://github.com/tamas-ferenci/GondolatokAMagyarKorhaziAdatokElemzeserolEsNehanyEgeszsegpolitikaiMegjegyzes) részletesen megtárgyaltam ezt a kérdést, ezt bátran merem ajánlani az érdeklődőeknek, röviden összefoglalva három baj van. Egyrészt a rengeteg kórház fenntartása nyilvánvalóan nem gazdaságos. Ez a legkisebb probléma, ezt figyelembe vehetnénk a költségben, vagy az egyszerűség kedvéért mondjuk most azt, hogy a jótündér ezt is fizeti. De még _ekkor sem_ jó ötlet rengeteg kórházat telepíteni! A második gond, hogy az orvosok és ápolók szintén szét fognak töredezni, a méretgazdaságosság nem csak pénzben üt vissza: nem lesz elég ember ennyi kórházat működtetni. Sőt, valójában nem csak az emberekről van szó, hanem a berendezésekről, műszerekről: ha rengeteg kórház van, akkor nem fogjuk tudni mindegyikbe megvenni a legkorszerűbb eszközöket (vagy, ha mégis megtesszük, akkor meg ott fognak állni kihasználatlanul). De ha ezt is félrerakjuk, akkor jön a harmadik és legfontosabb probléma: az, hogy ez esetben nagyon kevés esetet fog ellátni egy kórház. De ez miért baj? -- kérdezhetné valaki. Nem direkt jó? Hiszen akkor nincs kapkodás, nyugodtan lehet dolgozni az orvosoknak, nem kell sokat várnia a betegeknek...! Igen, ezek jogos szempontok, és lesznek esetek, amikor ezek dominálnak. Csak sajnos van egy ellentétes szempont is, és az esetek egy jelentős részében ez lesz a (sokkal) fontosabb: hogy a személyzet így nem tud gyakorlatot szerezni! Különböző beavatkozások egész során dokumentálták empirikus kutatásokkal, hogy a nagyobb kórházi ellátási volumen javítja a kimenetet. Illusztratív példaként egy részlet egy ma már [klasszikus kutatás](https://www.nejm.org/doi/10.1056/NEJMsa012337) eredményeiből:
 
-![Halálozás függése az évente ellátott esetszámtól](nejmsa012337_f2_A.png)
+![Halálozás függése az évente ellátott esetszámtól](./files/nejmsa012337_f2_A.png)
 
 Az ábrán az látszik, hogy négy különböző műtéttípus esetén (ez a négy csoportja az oszlopoknak) hogyan alakul a -- 30 napon belüli vagy kórházi -- halálozás a szerint, hogy az adott kórház mennyi műtét végez a kérdéses típusból (minél világosabb az oszlop, annál többet). Az eredmény nem igényel sok kommentárt: a növekvő gyakorlattal csökken, esetenként egészen drámai mértékben a halálozás. (Természetesen felvethető, hogy a különböző kórházak más összetételű, például más súlyosságú vagy életkorú betegeket láttak el, de az eredmények erre már korrigálva vannak.)
 
@@ -575,19 +587,19 @@ A TSP megoldása általában véve bonyolult számítási szempontból (vájtfü
 Erre a célra a [Concorde TSP Solver](www.math.uwaterloo.ca/tsp/concorde/) nevű programot használtam, ami bár kissé koros, ám a mai napig a legjobb algoritmusnak tarják nagy TSP-problémák egzakt kezelésére. Ennek van egy saját adatformátuma, de szerencsére a `TSPLIB` nevű R könyvtárral könnyen kimenthetjük az adatainkat ebben a formában. Két dologra kell csak figyelni. Az egyik, hogy érdemes a szimmetrizált távolságmátrixot használni: mivel, mint láttuk is, a mátrix közel szimmetrikus, így ez sokat nem oszt vagy szoroz, cserében viszont sokkal-sokkal egyszerűbb lesz a probléma számítástechnikai szempontból. A másik egy informatikai korlát: a Concorde kizárólag egész számokat hajlandó megenni távolságként. Ha a súlyok (idők) nem egész számok, mint ahogy most természetesen nem azok, akkor úgy oldhatjuk meg a problémát -- ezt a `TSPLIB` beépítetten el is végzi -- hogy a tizedesvesszőt odébbrakjuk (minden számot felszorzunk $10^k$-nal), és persze nem feledkezünk meg arról, hogy az eredmény is ennyivel fel lesz szorozva, azaz abban a tizedesvesszőt ugyanannyival vissza kell rakni. Az egyetlen probléma $k$ megválasztása: annál pontosabbak vagyunk, minél nagyobb ez, de túl nagy sem lehet, különben akkorák lesznek a számok, hogy nem férnek bele a számábrázolási tartományba. Pár próbálkozás árán kisül, hogy 4 a legnagyobb szám, amivel lefut majd az algoritmus:
 
 ```{r}
-TSP::write_TSPLIB(TSP::as.TSP(durationsSymm), "SymmDurationMatTSP.tsp", precision = 4)
+TSP::write_TSPLIB(TSP::as.TSP(durationsSymm), "./data/SymmDurationMatTSP.tsp", precision = 4)
 ```
 
 Ha ez megvan, akkor le is futtathatjuk a Concorde-ot ezen az adatbázison:
 
-    ./concorde SymmDurationMatTSP.tsp > SymmDurationMatTSP.log
+./concorde SymmDurationMatTSP.tsp > SymmDurationMatTSP.log
 
-Az eredményül kapott log fájlt [elérhetővé tettem](SymmDurationMatTSP.log); ebből mellesleg az is látszik, hogy a teljes futási idő nálam 69221 másodperc, azaz kicsit több mint 19 óra volt.
+Az eredményül kapott log fájlt [elérhetővé tettem](./data/SymmDurationMatTSP.log); ebből mellesleg az is látszik, hogy a teljes futási idő nálam 69221 másodperc, azaz kicsit több mint 19 óra volt.
 
 De mi az optimális útvonal? Ez a `.sol` fájlból olvasható ki, egyedül arra kell figyelni, hogy a Concorde 0-tól kezdi a pontok számozását (magyarán 1-et hozzá kell adni minden számhoz, hogy megkapjuk a bemenetben, jelen esetben a `locs`-ban szereplő elemekre a hivatkozást). Nem csigázom tovább a kedélyeket, íme a válasz:
 
 ```{r}
-TSPsol <- read.table("SymmDurationMatTSP.sol", header = FALSE, skip = 1, fill = TRUE)
+TSPsol <- read.table("./data/SymmDurationMatTSP.sol", header = FALSE, skip = 1, fill = TRUE)
 TSPsol <- c(t(TSPsol))
 TSPsol <- TSPsol[!is.na(TSPsol)]
 TSPsol <- TSPsol + 1
@@ -595,7 +607,7 @@ TSPsol <- TSPsol + 1
 TSPsolItinary <- data.table(Var1 = locs$NAME[TSPsol],
                             Var2 = c(locs$NAME[TSPsol][-1], locs$NAME[TSPsol][1]))
 TSPsolItinary <- merge(TSPsolItinary, durationsLong, by = c("Var1", "Var2"), sort = FALSE)
-fwrite(TSPsolItinary, "TSPsolItinary.csv", dec = ",", sep = ";", bom = TRUE)
+fwrite(TSPsolItinary, "./data/TSPsolItinary.csv", dec = ",", sep = ";", bom = TRUE)
 
 ggplot(geodata) + geom_sf(color = NA) +
   geom_point(data = locs[TSPsol,], aes(x = X, y = Y), size = 0.3) +
@@ -638,10 +650,11 @@ Felsorolok néhány olyan lehetőséget, amelyek a fentiekben nyitva maradtak, d
 Magyarország térképét az OpenStreetMap [magyar oldaláról](https://data2.openstreetmap.hu/hatarok/) tölthetjük le:
 
 ```{r}
-if (!file.exists("kozighatarok.zip")) {
+if (!file.exists("./data/kozighatarok.zip")) {
   unlink("./kozighatarok/", recursive = TRUE)
-  download.file("http://data2.openstreetmap.hu/hatarok/kozighatarok.zip", "kozighatarok.zip")
-  unzip("kozighatarok.zip")
+  download.file("http://data2.openstreetmap.hu/hatarok/kozighatarok.zip",
+                "./data/kozighatarok.zip")
+  unzip("./data/kozighatarok.zip", exdir = "./kozighatarok/")
 }
 ```
 
@@ -701,7 +714,7 @@ A térkép koordinátarendszerét átállítjuk WGS84-re (hogy szokásos koordin
 
 ```{r}
 geodata <- st_transform(geodata, crs = "WGS84")
-saveRDS(geodata, "geodata.rds")
+saveRDS(geodata, "./data/geodata.rds")
 ```
 
 ### Magyarország településeinek adatai
@@ -709,21 +722,22 @@ saveRDS(geodata, "geodata.rds")
 A fenti térkép birtokában összeszedhetjük egy listába Magyarország összes települését (Budapest esetén pedig a kerületeket). Erre azonban van egy másik adatforrásunk is: a Központi Statisztikai Hivatal ún. [Helységnévtára](https://www.ksh.hu/apps/hntr.main)! (Régi nevén Helységnévkönyv.) Töltsük ezt le:
 
 ```{r}
-if (!file.exists("hnt_letoltes_2022.xlsx"))
+if (!file.exists("./data/hnt_letoltes_2022.xlsx"))
   download.file("https://www.ksh.hu/docs/helysegnevtar/hnt_letoltes_2022.xlsx",
-                "hnt_letoltes_2022.xlsx", mode = "wb")
+                "./data/hnt_letoltes_2022.xlsx", mode = "wb")
 ```
 
 Majd olvassuk be:
 
 ```{r, message = FALSE}
-HNTdata <- readxl::read_excel("hnt_letoltes_2022.xlsx", .name_repair = "universal", skip = 2)
+HNTdata <- readxl::read_excel("./data/hnt_letoltes_2022.xlsx", .name_repair = "universal",
+                              skip = 2)
 HNTdata <- HNTdata[!HNTdata$Helység.megnevezése%in%c("Összesen", "Budapest"),]
 HNTdata$Helység.megnevezése <- ifelse(grepl("Budapest", HNTdata$Helység.megnevezése),
                                       paste0(substring(HNTdata$Helység.megnevezése, 1,
-                                                       nchar(HNTdata$Helység.megnevezése)-1), "ület"),
+                                                       nchar(HNTdata$Helység.megnevezése)-1),
+                                             "ület"),
                                       HNTdata$Helység.megnevezése)
-saveRDS(HNTdata, "HNTdata.rds")
 ```
 
 Ellenőrizzük le, hogy a két adatforrásból ugyanarra jutottunk-e:
@@ -731,7 +745,7 @@ Ellenőrizzük le, hogy a két adatforrásból ugyanarra jutottunk-e:
 ```{r}
 nrow(geodata)
 nrow(HNTdata)
-sum(geodata$NAME!=HNTdata$Helység.megnevezése)
+sum(geodata$NAME != HNTdata$Helység.megnevezése)
 ```
 
 Szerencsére minden stimmel, ugyanaz a listánk, megvan Magyarország mind `r nrow(geodata)` települése (Budapest helyett a kerületeket számolva).
@@ -742,8 +756,8 @@ Zárásként nyerjük ki a települések koordinátáit, hiszen az útvonalterve
 
 ```{r, warning = FALSE}
 locs <- data.frame(NAME = geodata$NAME, st_coordinates(st_centroid(geodata)))
-saveRDS(locs, "locs.rds")
-write.csv(locs[, c("X", "Y")], "osrmlocs.csv", row.names = FALSE)
+saveRDS(locs, "./data/locs.rds")
+write.csv(locs[, c("X", "Y")], "./data/osrmlocs.csv", row.names = FALSE)
 knitr::kable(head(locs))
 ```
 
@@ -811,17 +825,17 @@ Itt az `osrmtable.js` tartalma:
     var coordinatesin = fs.readFileSync('locs.csv', 'utf8')
 
     coordinatesin = convertCSVToArray(coordinatesin, {
-      header : false,
-      type: 'array',
-      separator: ',',
+        header : false,
+        type: 'array',
+        separator: ',',
     });
 
     osrm.table({
-      coordinates: coordinatesin,
-      annotations: ['duration', 'distance']
+        coordinates: coordinatesin,
+        annotations: ['duration', 'distance']
     }, function(err, response) {
-      fs.writeFileSync('osrmdurations.csv', convertArrayToCSV(response.durations));
-      fs.writeFileSync('osrmdistances.csv', convertArrayToCSV(response.distances));
+        fs.writeFileSync('osrmdurations.csv', convertArrayToCSV(response.durations));
+        fs.writeFileSync('osrmdistances.csv', convertArrayToCSV(response.distances));
     });
 
 Ez a szkript egy `locs.csv` nevű fájlban várja a koordinátákat, majd az `osrmdurations.csv` és az `osrmdistances.csv` fájlokban adja vissza a megoldásokat (útvonalak idejei és távolságai minden pár között). Vigyázat, ez mindenképp időre van optimalizálva, tehát a távolság úgy értendő, hogy a legrövidebb idejű utak távolsága, nem úgy, hogy a legkisebb távolság.
@@ -1030,7 +1044,7 @@ Amint mondtam, a településeket véletlenszerűen választottam ki az összes t
 Elsőként mind a négy optimalizáló -- egészértékű programozást megoldó -- eljárást használjuk, de csak szolid, legfeljebb 90 települést tartalmazó esetekben. Nézzük először az időigényt:
 
 ```{r}
-if(!file.exists("benchres1.rds")) {
+if(!file.exists("./data/benchres1.rds")) {
   benchres1 <- bench::press(
     n = c(seq(10, 90, 20)),
     k = c(1, 5, 10),
@@ -1045,8 +1059,8 @@ if(!file.exists("benchres1.rds")) {
                   HIGHS = solHIGHS(durs, k))
     }
   )
-  saveRDS(benchres1, "benchres1.rds")
-} else benchres1 <- readRDS("benchres1.rds")
+  saveRDS(benchres1, "./data/benchres1.rds")
+} else benchres1 <- readRDS("./data/benchres1.rds")
 
 benchres1DF <- with(benchres1, data.frame(n, k, rep, median = as.numeric(median),
                                           memory = as.numeric(mem_alloc)/1024/1024/1024,
@@ -1074,7 +1088,7 @@ Az `lp_solve` memóriaigénye valami egészen elmebeteg módon elszáll, tehát 
 Nézzük tehát a maradék három eljárást, immár egy picit nagyobb problémákra is, elmenve 200 településig. Szokásosan kezdjük a futás időigényével:
 
 ```{r}
-if(!file.exists("benchres2.rds")) {
+if(!file.exists("./data/benchres2.rds")) {
   benchres2 <- bench::press(
     n = c(seq(30, 120, 30), 150, 200),
     k = c(1, 5, 10, 30),
@@ -1088,8 +1102,8 @@ if(!file.exists("benchres2.rds")) {
                   HIGHS = solHIGHS(durs, k))
     }
   )
-  saveRDS(benchres2, "benchres2.rds")
-} else benchres2 <- readRDS("benchres2.rds")
+  saveRDS(benchres2, "./data/benchres2.rds")
+} else benchres2 <- readRDS("./data/benchres2.rds")
 
 benchres2DF <- with(benchres2, data.frame(n, k, rep, median = as.numeric(median),
                                           memory = as.numeric(mem_alloc)/1024/1024,
@@ -1117,7 +1131,7 @@ Itt viszont a GLPK már nagyon egyértelműen kilóg, így ha az előbbi után v
 A harmadik és egyben utolsó körbe, a "döntőbe" tehát a Cbc és a HiGHS jutott be. Itt már végképp bátrak vagyunk, és a pontos feltérképezés érdekében egészen az 500-as településszámig elmegyünk. Nézzük a futásidőt:
 
 ```{r}
-if(!file.exists("benchres3.rds")) {
+if(!file.exists("./data/benchres3.rds")) {
   benchres3 <- bench::press(
     n = seq(100, 500, 100),
     k = c(1, 10, 30, 50),
@@ -1130,8 +1144,8 @@ if(!file.exists("benchres3.rds")) {
                   HIGHS = solHIGHS(durs, k))
     }
   )
-  saveRDS(benchres3, "benchres3.rds")
-} else benchres3 <- readRDS("benchres3.rds")
+  saveRDS(benchres3, "./data/benchres3.rds")
+} else benchres3 <- readRDS("./data/benchres3.rds")
 
 benchres3DF <- with(benchres3, data.frame(n, k, rep, median = as.numeric(median),
                                           memory = as.numeric(mem_alloc)/1024/1024,
@@ -1174,7 +1188,7 @@ Tulajdonképpen már csak egy módosítást kell tennünk: meg kell engedni az �
 m <- nrow(durations)
 n <- sum(JarasInd)
 
-if(!file.exists("LocationResult.rds")) {
+if(!file.exists("./data/LocationResult.rds")) {
   LocationResult <- lapply(1:50, function(k) {
     tim <- bench::system_time(res <- highs::highs_solve(
       L = c(c(t(durations[, JarasInd] * outer(HNTdata$Lakó.népesség, rep(1, n)))), rep(0, n)),
@@ -1191,7 +1205,7 @@ if(!file.exists("LocationResult.rds")) {
     ))
     list(time = tim[["real"]], obj = res$objective_value, sol = round(res$primal_solution))
   })
-  saveRDS(result, "LocationResult.rds")
+  saveRDS(result, "./data/LocationResult.rds")
 }
 ```
 
@@ -1205,5 +1219,5 @@ LocRes <- data.table(k = 1:length(LocationResult),
                      time = sapply(LocationResult, function(x) x$time))
 LocRes <- cbind(LocRes, rbindlist(lapply(LocationResult, function(x)
   data.table(t(HNTdata[JarasInd,][x$sol[(m*n+1):(m*n+n)]==1, ]$Helység.megnevezése))), fill = TRUE))
-fwrite(LocRes, "LocRes.csv", dec = ",", sep = ";", bom = TRUE)
+fwrite(LocRes, "./data/LocRes.csv", dec = ",", sep = ";", bom = TRUE)
 ```

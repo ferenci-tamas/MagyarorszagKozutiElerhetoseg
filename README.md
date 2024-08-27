@@ -219,7 +219,7 @@ az OSRM így szolgáltatja, és nézzük is meg egy kis részletét ennek a
 mátrixnak (táblázatnak):
 
 ``` r
-durations <- fread("osrmdurations.csv")
+durations <- fread("./data/osrmdurations.csv")
 durations <- as.matrix(durations)
 rownames(durations) <- colnames(durations) <- locs$NAME
 durations <- durations/60/60
@@ -476,9 +476,10 @@ durationsLong$Var2 <- as.character(levels(durationsLong$Var2))[durationsLong$Var
 durationsSymmLong <- as.data.table(reshape2::melt(durationsSymm, value.name = "Duration"))
 durationsSymmLong$Var1 <- as.character(levels(durationsSymmLong$Var1))[durationsSymmLong$Var1]
 durationsSymmLong$Var2 <- as.character(levels(durationsSymmLong$Var2))[durationsSymmLong$Var2]
-saveRDS(durationsSymmLong, "durationsSymmLong.rds")
-fwrite(durationsLong, "durationsLong.csv", dec = ",", sep = ";", bom = TRUE)
-if(!file.exists("durationsLong.zip")) zip("durationsLong.zip", "durationsLong.csv")
+saveRDS(durationsSymmLong, "./data/durationsSymmLong.rds")
+fwrite(durationsLong, "./data/durationsLong.csv", dec = ",", sep = ";", bom = TRUE)
+if(!file.exists("./data/durationsLong.zip")) zip("./data/durationsLong.zip",
+                                                    "./data/durationsLong.csv")
 knitr::kable(head(durationsLong))
 ```
 
@@ -491,9 +492,9 @@ knitr::kable(head(durationsLong))
 | Abaújalpár | Aba  | 3.468972 |
 | Abaújkér   | Aba  | 3.362333 |
 
-Az adatállomány [ezen a linken](durationsLong.zip) külön is elérhetővé
-tettem tömörített CSV formátumban, hogy bárki tetszőleges saját
-elemzéshez is felhasználhassa.
+Az adatállomány [ezen a linken](./data/durationsLong.zip) külön is
+elérhetővé tettem tömörített CSV formátumban, hogy bárki tetszőleges
+saját elemzéshez is felhasználhassa.
 
 Most már nekiállhatunk a munkának! Első feladatként nézzük meg, hogy
 milyen messze vannak (menetidőben) a magyar települések egy bizonyos
@@ -587,7 +588,7 @@ p <- ggplot(bpcontour, aes(x = X, y = Y)) + geom_raster(aes(fill = Duration)) +
   labs(x = "", y = "", fill = "Eljutási idő [h]", caption = captionlab) +
   metR::scale_x_longitude(ticks = 1, expand = waiver()) +
   metR::scale_y_latitude(ticks = 0.5, expand = waiver())
-ggsave("BudapestKozutiEljutasiIdo.pdf", p, width = 16, height = 9, device = cairo_pdf)
+ggsave("./data/BudapestKozutiEljutasiIdo.pdf", p, width = 16, height = 9, device = cairo_pdf)
 p
 ```
 
@@ -596,7 +597,7 @@ p
 Ha egy szubjektív kiszólást tehetek, ez az ábra szerintem önmagában is
 szép: mint ahogy az erek hálózzák be a testet. (Ha más is így gondolná,
 letöltheti jó minőségű [PDF
-formátumban](https://raw.githubusercontent.com/tamas-ferenci/MagyarorszagKozutiElerhetoseg/main/BudapestKozutiEljutasiIdo.pdf)
+formátumban](https://raw.githubusercontent.com/tamas-ferenci/MagyarorszagKozutiElerhetoseg/main/data/BudapestKozutiEljutasiIdo.pdf)
 is ugyanezt az ábrát!)
 
 Mindazonáltal az ábra még tovább is fejleszthető. Vegyünk most egy másik
@@ -780,7 +781,7 @@ megnézni, alul láthatóak az időigények, a térkép London bázissal
 készült:
 
 <figure>
-<img src="Isochronic_Passage_Chart_Francis_Galton_1881.jpg"
+<img src="./files/Isochronic_Passage_Chart_Francis_Galton_1881.jpg"
 alt="Francis Galton izokrón térképe 1881-ből" />
 <figcaption aria-hidden="true">Francis Galton izokrón térképe
 1881-ből</figcaption>
@@ -799,7 +800,7 @@ belül, többek között Budapest (azaz Buda-Pest) központtal is.
 (ugyanis már korábban is készített ilyet), szintén London középponttal:
 
 <figure>
-<img src="1115IL_PL_CAR_01-web-header-v2.jpg"
+<img src="./files/1115IL_PL_CAR_01-web-header-v2.jpg"
 alt="John G. Bartholomew izokrón térképe 1914-ből" />
 <figcaption aria-hidden="true">John G. Bartholomew izokrón térképe
 1914-ből</figcaption>
@@ -814,7 +815,7 @@ nélkül](https://www.rome2rio.com/blog/2016/02/09/a-map-goes-unexpectedly-viral
 de megoldották a feladatot, íme az eredmény:
 
 <figure>
-<img src="world-map-isochronic-2016.jpg"
+<img src="./files/world-map-isochronic-2016.jpg"
 alt="A Rome2Rio izokrón térképe 2016-ból" />
 <figcaption aria-hidden="true">A Rome2Rio izokrón térképe
 2016-ból</figcaption>
@@ -879,7 +880,7 @@ menetrenden alapuló, de a legnagyobb elérhető sebesség alapján számolt
 térkép így néz ki:
 
 <figure>
-<img src="Kogutowicz1918.png"
+<img src="./files/Kogutowicz1918.png"
 alt="Kogutowicz Károly izokrón térkép 1917-ből" />
 <figcaption aria-hidden="true">Kogutowicz Károly izokrón térkép
 1917-ből</figcaption>
@@ -904,7 +905,7 @@ izokrón-térképeket, az egykorú menetrendek és jármű-paraméterek alapján
 térkép:
 
 <figure>
-<img src="Czere1991.png"
+<img src="./files/Czere1991.png"
 alt="Czére Béla rekonstruált izokrón térképe 1867-re vonatkozóan" />
 <figcaption aria-hidden="true">Czére Béla rekonstruált izokrón térképe
 1867-re vonatkozóan</figcaption>
@@ -937,7 +938,7 @@ megerősíteni; így néz ki a Google Maps útvonalterve erre a
 település-párra:
 
 <figure>
-<img src="FelsoszolnokKishodos_GoogleMaps.png"
+<img src="./files/FelsoszolnokKishodos_GoogleMaps.png"
 alt="Felsőszölönök és Kishódos távolsága a Google Maps szerint: 6 óra 10 perc - 8 óra, forgalomtól függően" />
 <figcaption aria-hidden="true">Felsőszölönök és Kishódos távolsága a
 Google Maps szerint: 6 óra 10 perc - 8 óra, forgalomtól
@@ -1396,7 +1397,7 @@ ezzel a módszerrel (idézzük fel a brute force megoldás számait!):
 m <- nrow(durations)
 n <- sum(JarasInd)
 
-LocationResult <- readRDS("LocationResult.rds")
+LocationResult <- readRDS("./data/LocationResult.rds")
 
 ggplot(data.frame(n = 1:length(LocationResult), time = sapply(LocationResult, function(x) x$time/60)),
        aes(x = n, y = time)) + geom_point() + geom_line() +
@@ -1473,7 +1474,7 @@ ggplot(data.frame(n = 1:length(LocationResult),
 ![](README_files/figure-gfm/unnamed-chunk-30-1.png)<!-- -->
 
 Az eredményeket a fenti vizualizációkon túl konkrétan is
-[letölthetővé](https://raw.githubusercontent.com/tamas-ferenci/MagyarorszagKozutiElerhetoseg/main/LocRes.csv)
+[letölthetővé](https://raw.githubusercontent.com/tamas-ferenci/MagyarorszagKozutiElerhetoseg/main/data/LocRes.csv)
 tettem (a pontos futásidőkkel, elérési időkkel, és a
 településlistákkal).
 
@@ -1617,7 +1618,7 @@ már [klasszikus kutatás](https://www.nejm.org/doi/10.1056/NEJMsa012337)
 eredményeiből:
 
 <figure>
-<img src="nejmsa012337_f2_A.png"
+<img src="./files/nejmsa012337_f2_A.png"
 alt="Halálozás függése az évente ellátott esetszámtól" />
 <figcaption aria-hidden="true">Halálozás függése az évente ellátott
 esetszámtól</figcaption>
@@ -1757,18 +1758,18 @@ tartományba. Pár próbálkozás árán kisül, hogy 4 a legnagyobb szám,
 amivel lefut majd az algoritmus:
 
 ``` r
-TSP::write_TSPLIB(TSP::as.TSP(durationsSymm), "SymmDurationMatTSP.tsp", precision = 4)
+TSP::write_TSPLIB(TSP::as.TSP(durationsSymm), "./data/SymmDurationMatTSP.tsp", precision = 4)
 ```
 
 Ha ez megvan, akkor le is futtathatjuk a Concorde-ot ezen az
 adatbázison:
 
-    ./concorde SymmDurationMatTSP.tsp > SymmDurationMatTSP.log
+./concorde SymmDurationMatTSP.tsp \> SymmDurationMatTSP.log
 
 Az eredményül kapott log fájlt [elérhetővé
-tettem](SymmDurationMatTSP.log); ebből mellesleg az is látszik, hogy a
-teljes futási idő nálam 69221 másodperc, azaz kicsit több mint 19 óra
-volt.
+tettem](./data/SymmDurationMatTSP.log); ebből mellesleg az is látszik,
+hogy a teljes futási idő nálam 69221 másodperc, azaz kicsit több mint 19
+óra volt.
 
 De mi az optimális útvonal? Ez a `.sol` fájlból olvasható ki, egyedül
 arra kell figyelni, hogy a Concorde 0-tól kezdi a pontok számozását
@@ -1777,7 +1778,7 @@ bemenetben, jelen esetben a `locs`-ban szereplő elemekre a hivatkozást).
 Nem csigázom tovább a kedélyeket, íme a válasz:
 
 ``` r
-TSPsol <- read.table("SymmDurationMatTSP.sol", header = FALSE, skip = 1, fill = TRUE)
+TSPsol <- read.table("./data/SymmDurationMatTSP.sol", header = FALSE, skip = 1, fill = TRUE)
 TSPsol <- c(t(TSPsol))
 TSPsol <- TSPsol[!is.na(TSPsol)]
 TSPsol <- TSPsol + 1
@@ -1785,7 +1786,7 @@ TSPsol <- TSPsol + 1
 TSPsolItinary <- data.table(Var1 = locs$NAME[TSPsol],
                             Var2 = c(locs$NAME[TSPsol][-1], locs$NAME[TSPsol][1]))
 TSPsolItinary <- merge(TSPsolItinary, durationsLong, by = c("Var1", "Var2"), sort = FALSE)
-fwrite(TSPsolItinary, "TSPsolItinary.csv", dec = ",", sep = ";", bom = TRUE)
+fwrite(TSPsolItinary, "./data/TSPsolItinary.csv", dec = ",", sep = ";", bom = TRUE)
 
 ggplot(geodata) + geom_sf(color = NA) +
   geom_point(data = locs[TSPsol,], aes(x = X, y = Y), size = 0.3) +
@@ -1865,10 +1866,11 @@ Magyarország térképét az OpenStreetMap [magyar
 oldaláról](https://data2.openstreetmap.hu/hatarok/) tölthetjük le:
 
 ``` r
-if (!file.exists("kozighatarok.zip")) {
+if (!file.exists("./data/kozighatarok.zip")) {
   unlink("./kozighatarok/", recursive = TRUE)
-  download.file("http://data2.openstreetmap.hu/hatarok/kozighatarok.zip", "kozighatarok.zip")
-  unzip("kozighatarok.zip")
+  download.file("http://data2.openstreetmap.hu/hatarok/kozighatarok.zip",
+                "./data/kozighatarok.zip")
+  unzip("./data/kozighatarok.zip", exdir = "./kozighatarok/")
 }
 ```
 
@@ -1957,7 +1959,7 @@ koordinákat), és utána el is mentjük a későbbi gyors feldolgozáshoz:
 
 ``` r
 geodata <- st_transform(geodata, crs = "WGS84")
-saveRDS(geodata, "geodata.rds")
+saveRDS(geodata, "./data/geodata.rds")
 ```
 
 ### Magyarország településeinek adatai
@@ -1969,21 +1971,22 @@ van egy másik adatforrásunk is: a Központi Statisztikai Hivatal ún.
 Helységnévkönyv.) Töltsük ezt le:
 
 ``` r
-if (!file.exists("hnt_letoltes_2022.xlsx"))
+if (!file.exists("./data/hnt_letoltes_2022.xlsx"))
   download.file("https://www.ksh.hu/docs/helysegnevtar/hnt_letoltes_2022.xlsx",
-                "hnt_letoltes_2022.xlsx", mode = "wb")
+                "./data/hnt_letoltes_2022.xlsx", mode = "wb")
 ```
 
 Majd olvassuk be:
 
 ``` r
-HNTdata <- readxl::read_excel("hnt_letoltes_2022.xlsx", .name_repair = "universal", skip = 2)
+HNTdata <- readxl::read_excel("./data/hnt_letoltes_2022.xlsx", .name_repair = "universal",
+                              skip = 2)
 HNTdata <- HNTdata[!HNTdata$Helység.megnevezése%in%c("Összesen", "Budapest"),]
 HNTdata$Helység.megnevezése <- ifelse(grepl("Budapest", HNTdata$Helység.megnevezése),
                                       paste0(substring(HNTdata$Helység.megnevezése, 1,
-                                                       nchar(HNTdata$Helység.megnevezése)-1), "ület"),
+                                                       nchar(HNTdata$Helység.megnevezése)-1),
+                                             "ület"),
                                       HNTdata$Helység.megnevezése)
-saveRDS(HNTdata, "HNTdata.rds")
 ```
 
 Ellenőrizzük le, hogy a két adatforrásból ugyanarra jutottunk-e:
@@ -2001,7 +2004,7 @@ nrow(HNTdata)
     ## [1] 3177
 
 ``` r
-sum(geodata$NAME!=HNTdata$Helység.megnevezése)
+sum(geodata$NAME != HNTdata$Helység.megnevezése)
 ```
 
     ## [1] 0
@@ -2020,8 +2023,8 @@ koordináta ennek a középpontja:
 
 ``` r
 locs <- data.frame(NAME = geodata$NAME, st_coordinates(st_centroid(geodata)))
-saveRDS(locs, "locs.rds")
-write.csv(locs[, c("X", "Y")], "osrmlocs.csv", row.names = FALSE)
+saveRDS(locs, "./data/locs.rds")
+write.csv(locs[, c("X", "Y")], "./data/osrmlocs.csv", row.names = FALSE)
 knitr::kable(head(locs))
 ```
 
@@ -2132,17 +2135,17 @@ Itt az `osrmtable.js` tartalma:
     var coordinatesin = fs.readFileSync('locs.csv', 'utf8')
 
     coordinatesin = convertCSVToArray(coordinatesin, {
-      header : false,
-      type: 'array',
-      separator: ',',
+        header : false,
+        type: 'array',
+        separator: ',',
     });
 
     osrm.table({
-      coordinates: coordinatesin,
-      annotations: ['duration', 'distance']
+        coordinates: coordinatesin,
+        annotations: ['duration', 'distance']
     }, function(err, response) {
-      fs.writeFileSync('osrmdurations.csv', convertArrayToCSV(response.durations));
-      fs.writeFileSync('osrmdistances.csv', convertArrayToCSV(response.distances));
+        fs.writeFileSync('osrmdurations.csv', convertArrayToCSV(response.durations));
+        fs.writeFileSync('osrmdistances.csv', convertArrayToCSV(response.distances));
     });
 
 Ez a szkript egy `locs.csv` nevű fájlban várja a koordinátákat, majd az
@@ -2514,7 +2517,7 @@ eljárást használjuk, de csak szolid, legfeljebb 90 települést tartalmazó
 esetekben. Nézzük először az időigényt:
 
 ``` r
-if(!file.exists("benchres1.rds")) {
+if(!file.exists("./data/benchres1.rds")) {
   benchres1 <- bench::press(
     n = c(seq(10, 90, 20)),
     k = c(1, 5, 10),
@@ -2529,8 +2532,8 @@ if(!file.exists("benchres1.rds")) {
                   HIGHS = solHIGHS(durs, k))
     }
   )
-  saveRDS(benchres1, "benchres1.rds")
-} else benchres1 <- readRDS("benchres1.rds")
+  saveRDS(benchres1, "./data/benchres1.rds")
+} else benchres1 <- readRDS("./data/benchres1.rds")
 
 benchres1DF <- with(benchres1, data.frame(n, k, rep, median = as.numeric(median),
                                           memory = as.numeric(mem_alloc)/1024/1024/1024,
@@ -2565,7 +2568,7 @@ problémákra is, elmenve 200 településig. Szokásosan kezdjük a futás
 időigényével:
 
 ``` r
-if(!file.exists("benchres2.rds")) {
+if(!file.exists("./data/benchres2.rds")) {
   benchres2 <- bench::press(
     n = c(seq(30, 120, 30), 150, 200),
     k = c(1, 5, 10, 30),
@@ -2579,8 +2582,8 @@ if(!file.exists("benchres2.rds")) {
                   HIGHS = solHIGHS(durs, k))
     }
   )
-  saveRDS(benchres2, "benchres2.rds")
-} else benchres2 <- readRDS("benchres2.rds")
+  saveRDS(benchres2, "./data/benchres2.rds")
+} else benchres2 <- readRDS("./data/benchres2.rds")
 
 benchres2DF <- with(benchres2, data.frame(n, k, rep, median = as.numeric(median),
                                           memory = as.numeric(mem_alloc)/1024/1024,
@@ -2623,7 +2626,7 @@ jutott be. Itt már végképp bátrak vagyunk, és a pontos feltérképezés
 futásidőt:
 
 ``` r
-if(!file.exists("benchres3.rds")) {
+if(!file.exists("./data/benchres3.rds")) {
   benchres3 <- bench::press(
     n = seq(100, 500, 100),
     k = c(1, 10, 30, 50),
@@ -2636,8 +2639,8 @@ if(!file.exists("benchres3.rds")) {
                   HIGHS = solHIGHS(durs, k))
     }
   )
-  saveRDS(benchres3, "benchres3.rds")
-} else benchres3 <- readRDS("benchres3.rds")
+  saveRDS(benchres3, "./data/benchres3.rds")
+} else benchres3 <- readRDS("./data/benchres3.rds")
 
 benchres3DF <- with(benchres3, data.frame(n, k, rep, median = as.numeric(median),
                                           memory = as.numeric(mem_alloc)/1024/1024,
@@ -2697,7 +2700,7 @@ oldassuk meg különböző számú kórházra, 1-től 50-ig:
 m <- nrow(durations)
 n <- sum(JarasInd)
 
-if(!file.exists("LocationResult.rds")) {
+if(!file.exists("./data/LocationResult.rds")) {
   LocationResult <- lapply(1:50, function(k) {
     tim <- bench::system_time(res <- highs::highs_solve(
       L = c(c(t(durations[, JarasInd] * outer(HNTdata$Lakó.népesség, rep(1, n)))), rep(0, n)),
@@ -2714,7 +2717,7 @@ if(!file.exists("LocationResult.rds")) {
     ))
     list(time = tim[["real"]], obj = res$objective_value, sol = round(res$primal_solution))
   })
-  saveRDS(result, "LocationResult.rds")
+  saveRDS(result, "./data/LocationResult.rds")
 }
 ```
 
@@ -2729,5 +2732,5 @@ LocRes <- data.table(k = 1:length(LocationResult),
                      time = sapply(LocationResult, function(x) x$time))
 LocRes <- cbind(LocRes, rbindlist(lapply(LocationResult, function(x)
   data.table(t(HNTdata[JarasInd,][x$sol[(m*n+1):(m*n+n)]==1, ]$Helység.megnevezése))), fill = TRUE))
-fwrite(LocRes, "LocRes.csv", dec = ",", sep = ";", bom = TRUE)
+fwrite(LocRes, "./data/LocRes.csv", dec = ",", sep = ";", bom = TRUE)
 ```
