@@ -71,7 +71,7 @@ Ferenci Tamás (<https://www.medstat.hu/>)
   hosszabban beszélek ezen eredmény limitációiról is.
 - Ezek a vizsgálatok elvégezhetőek nem csak Magyarország településeire,
   hanem egy településen belül is; ezt egy [egy másik
-  írásom](https://github.com/tamas-ferenci/BudapestiElerhetoseg) mutatja
+  írásom](https://github.com/ferenci-tamas/BudapestiElerhetoseg) mutatja
   be Budapest példáján.
 - Az összes számításomat és eredményemet teljesen transzparensen közlöm:
   mind a nyers adatokat megadom, mind a kódokat valamennyi számítás
@@ -109,7 +109,7 @@ Ezekre a kérdésekre fogok a jelen esszében megpróbálni válaszolni.
 (Természetesen ezek a kérdések nem csak a különböző települések közötti
 eljutás kapcsán tehetőek fel, hanem egy település különböző pontjai
 között eljutásra vonatkozóan is. Egy [másik
-írásom](https://github.com/tamas-ferenci/BudapestiElerhetoseg) ezt
+írásom](https://github.com/ferenci-tamas/BudapestiElerhetoseg) ezt
 mutatja be Budapest példáján.)
 
 A problémakört szép nevén *közúti elérhetőségnek* lehetne nevezni.
@@ -597,7 +597,7 @@ p
 Ha egy szubjektív kiszólást tehetek, ez az ábra szerintem önmagában is
 szép: mint ahogy az erek hálózzák be a testet. (Ha más is így gondolná,
 letöltheti jó minőségű [PDF
-formátumban](https://raw.githubusercontent.com/tamas-ferenci/MagyarorszagKozutiElerhetoseg/main/data/BudapestKozutiEljutasiIdo.pdf)
+formátumban](https://raw.githubusercontent.com/ferenci-tamas/MagyarorszagKozutiElerhetoseg/main/data/BudapestKozutiEljutasiIdo.pdf)
 is ugyanezt az ábrát!)
 
 Mindazonáltal az ábra még tovább is fejleszthető. Vegyünk most egy másik
@@ -1474,7 +1474,7 @@ ggplot(data.frame(n = 1:length(LocationResult),
 ![](README_files/figure-gfm/unnamed-chunk-30-1.png)<!-- -->
 
 Az eredményeket a fenti vizualizációkon túl konkrétan is
-[letölthetővé](https://raw.githubusercontent.com/tamas-ferenci/MagyarorszagKozutiElerhetoseg/main/data/LocRes.csv)
+[letölthetővé](https://github.com/ferenci-tamas/MagyarorszagKozutiElerhetoseg/blob/main/data/LocRes.csv)
 tettem (a pontos futásidőkkel, elérési időkkel, és a
 településlistákkal).
 
@@ -1568,7 +1568,7 @@ természetesen az adatvédelmi szabályoknak megfelelő módon – például
 kizárólag járási incidenciákat közölve – bárki számára elérhetően,
 kutathatóan, részletes magyarázattal, meta-adatokkal ellátva közölni
 kell. Kérdés, hogy ennek megvalósulása a [mai magyar
-helyzetben](https://github.com/tamas-ferenci/GondolatokAJarvanyugyiAdatokKozleserol)
+helyzetben](https://github.com/ferenci-tamas/GondolatokAJarvanyugyiAdatokKozleserol)
 mennyire csak illúzió a részemről…)
 
 És a végére még egy gondolat. Valakiben felmerülhet az ötlet, hogy akkor
@@ -1591,7 +1591,7 @@ egyet. Valójában azonban bonyolultabb a helyzet: ha egy jótündér
 kifizetné az országnak tetszőleges számú kórház megépítését, *akkor sem*
 biztos, hogy az lenne a jó ötlet, ha mind a 3177 településre építenénk
 egy kórházat. Egy [másik
-írásomban](https://github.com/tamas-ferenci/GondolatokAMagyarKorhaziAdatokElemzeserolEsNehanyEgeszsegpolitikaiMegjegyzes)
+írásomban](github.com/ferenci-tamas/korhaz-agyszam-betegforgalom-halalozas-egeszsegpolitika)
 részletesen megtárgyaltam ezt a kérdést, ezt bátran merem ajánlani az
 érdeklődőeknek, röviden összefoglalva három baj van. Egyrészt a rengeteg
 kórház fenntartása nyilvánvalóan nem gazdaságos. Ez a legkisebb
@@ -1682,7 +1682,7 @@ okokból – kevés, a lakosság érdekeit a politikai kár vállalása árán i
 eltekintve – nem lehet kimondani, hogy ágyszámot csökkentünk, pláne
 kórházat zárunk be, miközben mindenki tudja, hogy erre lenne szükség. De
 ez már végképp az említett [másik
-írásom](https://github.com/tamas-ferenci/GondolatokAMagyarKorhaziAdatokElemzeserolEsNehanyEgeszsegpolitikaiMegjegyzes)
+írásom](github.com/ferenci-tamas/korhaz-agyszam-betegforgalom-halalozas-egeszsegpolitika)
 témája.
 
 Ha már itt tartunk, valakiben felmerülhet az a gondolat is, hogy akkor
@@ -1855,7 +1855,7 @@ maradtak, de szerintem a vizsgálatuk érdekes és izgalmas lehet.
   helyenként ráadásul elég komplex beutalási rend érvényesül – ennek
   figyelembevétele szintén érdekes kérdés lehet. A kórházak területi
   ellátási kötelezettségének alapvonalairól [egy másik
-  írásomban](https://github.com/tamas-ferenci/KorhazakTeruletiEllatasiKotelezettsege)
+  írásomban](https://github.com/ferenci-tamas/KorhazakTeruletiEllatasiKotelezettsege)
   értekeztem dióhéjban.
 
 ## Az útvonaltervezés technikai részletei

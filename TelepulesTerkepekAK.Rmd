@@ -1,7 +1,7 @@
 ---
 title: "Magyar települések közúti elérhetősége -- településszintű térképek (A-K)"
 author:
-  - Ferenci Tamás (tamas.ferenci@medstat.hu)
+  - Ferenci Tamás (https://www.medstat.hu/)
 output: github_document
 lang: hu
 editor_options:
@@ -10,7 +10,7 @@ editor_options:
 
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(echo = FALSE, fig.width = 12, dpi = 300, dev = "ragg_png")
-locs <- readRDS("locs.rds")
+locs <- readRDS("data/locs.rds")
 locs$FileNAME <- gsub("-", "", gsub(" ", "", iconv(locs$NAME, to = "ASCII//TRANSLIT")))
 baseurl <- "maps/"
 ```
