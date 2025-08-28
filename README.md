@@ -1591,7 +1591,7 @@ egyet. Valójában azonban bonyolultabb a helyzet: ha egy jótündér
 kifizetné az országnak tetszőleges számú kórház megépítését, *akkor sem*
 biztos, hogy az lenne a jó ötlet, ha mind a 3177 településre építenénk
 egy kórházat. Egy [másik
-írásomban](github.com/ferenci-tamas/korhaz-agyszam-betegforgalom-halalozas-egeszsegpolitika)
+írásomban](https://github.com/ferenci-tamas/korhaz-agyszam-betegforgalom-halalozas-egeszsegpolitika)
 részletesen megtárgyaltam ezt a kérdést, ezt bátran merem ajánlani az
 érdeklődőeknek, röviden összefoglalva három baj van. Egyrészt a rengeteg
 kórház fenntartása nyilvánvalóan nem gazdaságos. Ez a legkisebb
@@ -1682,7 +1682,7 @@ okokból – kevés, a lakosság érdekeit a politikai kár vállalása árán i
 eltekintve – nem lehet kimondani, hogy ágyszámot csökkentünk, pláne
 kórházat zárunk be, miközben mindenki tudja, hogy erre lenne szükség. De
 ez már végképp az említett [másik
-írásom](github.com/ferenci-tamas/korhaz-agyszam-betegforgalom-halalozas-egeszsegpolitika)
+írásom](https://github.com/ferenci-tamas/korhaz-agyszam-betegforgalom-halalozas-egeszsegpolitika)
 témája.
 
 Ha már itt tartunk, valakiben felmerülhet az a gondolat is, hogy akkor
