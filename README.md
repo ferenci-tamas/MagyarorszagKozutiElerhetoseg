@@ -622,29 +622,30 @@ interpolációt készíteni, és az alapján behúzni az izokrón vonalakat:
 contourplotter <- function(datain, geodatain, lab, telepules = NA, hascontour = FALSE, title = "",
                            filllims = NULL) {
   telepulescontour <- datain[, with(akima::interp(X, Y, value, nx = 1000, ny = 1000),
-                                    cbind(CJ(Y = y, X = x), value = c(z))[!is.na(value)])]
-  telepulescontour <- telepulescontour[sapply(st_intersects(st_as_sf(telepulescontour,
+                                    cbind(data.table::CJ(Y = y, X = x), value = c(z))[!is.na(value)])]
+  telepulescontour <- telepulescontour[sapply(sf::st_intersects(sf::st_as_sf(telepulescontour,
                                                                      coords = c("X", "Y"),
-                                                                     crs = st_crs(geodatain)),
+                                                                     crs = sf::st_crs(geodatain)),
                                                             geodatain), length)==1]
   
   telepulescontour2 <- datain[, with(akima::interp(X, Y, value, nx = 40, ny = 40),
-                                     cbind(CJ(Y = y, X = x), value = c(z))[!is.na(value)])]
-  telepulescontour2 <- telepulescontour2[sapply(st_intersects(st_as_sf(telepulescontour2,
+                                     cbind(data.table::CJ(Y = y, X = x), value = c(z))[!is.na(value)])]
+  telepulescontour2 <- telepulescontour2[sapply(sf::st_intersects(sf::st_as_sf(telepulescontour2,
                                                                        coords = c("X", "Y"),
-                                                                       crs = st_crs(geodatain)),
+                                                                       crs = sf::st_crs(geodatain)),
                                                               geodatain), length)==1]
   
-  ggplot(telepulescontour, aes(x = X, y = Y)) + geom_raster(aes(fill = value)) +
-    {if(!is.na(telepules)) stat_sf_coordinates(data = geodatain[geodatain$NAME==telepules,],
+  ggplot2::ggplot(telepulescontour, ggplot2::aes(x = X, y = Y)) +
+    ggplot2::geom_raster(ggplot2::aes(fill = value)) +
+    {if(!is.na(telepules)) ggplot2::stat_sf_coordinates(data = geodatain[geodatain$NAME==telepules,],
                                                inherit.aes = FALSE, color = "red")} +
-    {if(hascontour) metR::geom_contour2(data = telepulescontour2, aes(x = X, y = Y, z = value,
+    {if(hascontour) metR::geom_contour2(data = telepulescontour2, ggplot2::aes(x = X, y = Y, z = value,
                                                                       label = after_stat(level)),
                                         inherit.aes = FALSE, breaks = 1:10, skip = 0, color = "red")} +
-    labs(x = "", y = "", fill = lab, caption = captionlab, title = title) +
-    {if(!is.null(filllims)) scale_fill_gradient(limits = filllims)} +
-    metR::scale_x_longitude(ticks = 1, expand = waiver()) +
-    metR::scale_y_latitude(ticks = 0.5, expand = waiver())
+    ggplot2::labs(x = "", y = "", fill = lab, caption = captionlab, title = title) +
+    {if(!is.null(filllims)) ggplot2::scale_fill_gradient(limits = filllims)} +
+    metR::scale_x_longitude(ticks = 1, expand = ggplot2::waiver()) +
+    metR::scale_y_latitude(ticks = 0.5, expand = ggplot2::waiver())
 }
 contourplotter(merge(durationsLong[Var1=="Csobád", .(NAME = Var2, value = Duration)], locs), geodata,
                "Eljutási idő [h]", "Csobád", TRUE)
@@ -992,7 +993,7 @@ vesszük ki, és vizsgáljuk meg.) Például Csobád esetében ez így néz ki:
 
 ``` r
 ggplot(durationsLong[Var1=="Csobád"], aes(x = Duration)) +
-  geom_histogram(boundary = 0, bins = ceiling(log2(nrow(durationsLong[Var2 > Var1])))+1) +
+  geom_histogram(boundary = 0, binwidth = function(x) diff(range(x)) / nclass.Sturges(x)) +
   scale_y_continuous(label = scales::comma) +
   labs(x = "Elérési idő [h]", y = "Települések száma", caption = captionlab)
 ```
@@ -1429,7 +1430,7 @@ kórházat amikor több kórházas optimumot keresünk):
 kkorhazplot <- function(result, k) {
   optlocs <- sapply(LocationResult, function(x)
     HNTdata[JarasInd,][x$sol[(m*n+1):(m*n+n)]==1, ]$Helység.megnevezése)
-  p <- contourplotter(merge(melt(
+  p <- contourplotter(merge(data.table::melt(
     Reduce(function(...) merge(..., by = "NAME"), lapply(1:k, function(i)
       setNames(durationsLong[Var1==HNTdata[JarasInd,][which(
         result[[k]]$sol[(m*n+1):(m*n+n)]==1),]$Helység.megnevezése[i],
@@ -1437,15 +1438,18 @@ kkorhazplot <- function(result, k) {
     id.vars = "NAME")[, .(value = min(value)) , .(NAME)], locs), geodata,
     "Súlyozott eljutási idő,\nlegközelebbi kórház [h]", title = paste0(k, " kórházas megoldás"),
     filllims = c(0, 4))
-  for(i in 1:k) p <- p + stat_sf_coordinates(data = geodata[geodata$NAME==optlocs[[k]][i],],
+  for(i in 1:k) p <- p + ggplot2::stat_sf_coordinates(data = geodata[geodata$NAME==optlocs[[k]][i],],
                                              inherit.aes = FALSE, color = "red")
   p
 }
 
-if(!file.exists("korhazplots.rds")) {
-  korhazplots <- lapply(1:length(LocationResult), function(k) kkorhazplot(LocationResult, k))
-  saveRDS(korhazplots, "korhazplots.rds")
-} else korhazplots <- readRDS("korhazplots.rds")
+cl <- parallel::makeCluster(parallelly::availableCores(omit = 1))
+parallel::clusterExport(cl, c("kkorhazplot", "LocationResult", "HNTdata", "JarasInd", "m", "n",
+                              "contourplotter", "durationsLong", "locs", "geodata", "captionlab"))
+
+korhazplots <- parallel::parLapply(cl, 1:length(LocationResult), function(k) kkorhazplot(LocationResult, k))
+
+parallel::stopCluster(cl)
 
 korhazbars <- lapply(1:length(LocationResult), function(k)
   ggplot(data.frame(y = sapply(LocationResult, function(x) x$obj/sum(HNTdata$Lakó.népesség))[k]),
@@ -2039,14 +2043,16 @@ knitr::kable(head(locs))
 
 ### Az OSRM letöltése és telepítése
 
-Az OSRM installálásának a részletei a
-<https://github.com/Project-OSRM/osrm-backend/wiki/Building-OSRM> címen
-elérhetőek. Tételesen, Ubuntu 20.04.4 alatt a következő parancsokat kell
-lefuttatni:
+Az OSRM installálásának a részletei a projekt
+[Github-oldalán](https://github.com/Project-OSRM/osrm-backend?tab=readme-ov-file#building-from-source)
+és [Github
+wiki-jén](https://github.com/Project-OSRM/osrm-backend/wiki/Building-OSRM)
+címen elérhetőek. Tételesen, Ubuntu 22.04 alatt a következő parancsokat
+kell lefuttatni:
 
     sudo apt install build-essential git cmake pkg-config \
-    libbz2-dev libstxxl-dev libstxxl1v5 libxml2-dev \
-    libzip-dev libboost-all-dev lua5.2 liblua5.2-dev libtbb-dev
+    libbz2-dev libxml2-dev libzip-dev libboost-all-dev \
+    lua5.2 liblua5.2-dev libtbb-dev
 
 Ezt követően szükség van a [node.js](https://nodejs.org/) környezet
 installálására is. Arra figyelni kell, hogy olyan verziót telepítsünk,
