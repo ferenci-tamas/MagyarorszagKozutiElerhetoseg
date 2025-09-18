@@ -107,7 +107,7 @@ durationsSymmLong$Var2 <- as.character(levels(durationsSymmLong$Var2))[durations
 saveRDS(durationsSymmLong, "./data/durationsSymmLong.rds")
 fwrite(durationsLong, "./data/durationsLong.csv", dec = ",", sep = ";", bom = TRUE)
 if(!file.exists("./data/durationsLong.zip")) zip("./data/durationsLong.zip",
-                                                    "./data/durationsLong.csv")
+                                                 "./data/durationsLong.csv")
 knitr::kable(head(durationsLong))
 ```
 
@@ -170,23 +170,23 @@ contourplotter <- function(datain, geodatain, lab, telepules = NA, hascontour = 
   telepulescontour <- datain[, with(akima::interp(X, Y, value, nx = 1000, ny = 1000),
                                     cbind(data.table::CJ(Y = y, X = x), value = c(z))[!is.na(value)])]
   telepulescontour <- telepulescontour[sapply(sf::st_intersects(sf::st_as_sf(telepulescontour,
-                                                                     coords = c("X", "Y"),
-                                                                     crs = sf::st_crs(geodatain)),
-                                                            geodatain), length)==1]
+                                                                             coords = c("X", "Y"),
+                                                                             crs = sf::st_crs(geodatain)),
+                                                                geodatain), length)==1]
   
   telepulescontour2 <- datain[, with(akima::interp(X, Y, value, nx = 40, ny = 40),
                                      cbind(data.table::CJ(Y = y, X = x), value = c(z))[!is.na(value)])]
   telepulescontour2 <- telepulescontour2[sapply(sf::st_intersects(sf::st_as_sf(telepulescontour2,
-                                                                       coords = c("X", "Y"),
-                                                                       crs = sf::st_crs(geodatain)),
-                                                              geodatain), length)==1]
+                                                                               coords = c("X", "Y"),
+                                                                               crs = sf::st_crs(geodatain)),
+                                                                  geodatain), length)==1]
   
   ggplot2::ggplot(telepulescontour, ggplot2::aes(x = X, y = Y)) +
     ggplot2::geom_raster(ggplot2::aes(fill = value)) +
     {if(!is.na(telepules)) ggplot2::stat_sf_coordinates(data = geodatain[geodatain$NAME==telepules,],
-                                               inherit.aes = FALSE, color = "red")} +
+                                                        inherit.aes = FALSE, color = "red")} +
     {if(hascontour) metR::geom_contour2(data = telepulescontour2, ggplot2::aes(x = X, y = Y, z = value,
-                                                                      label = after_stat(level)),
+                                                                               label = after_stat(level)),
                                         inherit.aes = FALSE, breaks = 1:10, skip = 0, color = "red")} +
     ggplot2::labs(x = "", y = "", fill = lab, caption = captionlab, title = title) +
     {if(!is.null(filllims)) ggplot2::scale_fill_gradient(limits = filllims)} +
@@ -526,7 +526,7 @@ kkorhazplot <- function(result, k) {
     "Súlyozott eljutási idő,\nlegközelebbi kórház [h]", title = paste0(k, " kórházas megoldás"),
     filllims = c(0, 4))
   for(i in 1:k) p <- p + ggplot2::stat_sf_coordinates(data = geodata[geodata$NAME==optlocs[[k]][i],],
-                                             inherit.aes = FALSE, color = "red")
+                                                      inherit.aes = FALSE, color = "red")
   p
 }
 
@@ -768,30 +768,38 @@ knitr::kable(head(locs))
 
 Az OSRM installálásának a részletei a projekt [Github-oldalán](https://github.com/Project-OSRM/osrm-backend?tab=readme-ov-file#building-from-source) és [Github wiki-jén](https://github.com/Project-OSRM/osrm-backend/wiki/Building-OSRM) címen elérhetőek. Tételesen, Ubuntu 22.04 alatt a következő parancsokat kell lefuttatni:
 
-    sudo apt install build-essential git cmake pkg-config \
-    libbz2-dev libxml2-dev libzip-dev libboost-all-dev \
-    lua5.2 liblua5.2-dev libtbb-dev
+```
+sudo apt install build-essential git cmake pkg-config \
+libbz2-dev libxml2-dev libzip-dev libboost-all-dev \
+lua5.2 liblua5.2-dev libtbb-dev
+```
 
 Ezt követően szükség van a [node.js](https://nodejs.org/) környezet installálására is. Arra figyelni kell, hogy olyan verziót telepítsünk, ami összhangban van azzal, hogy az OSRM mit támogat. Például az OSRM [5.27.1-es](https://github.com/Project-OSRM/osrm-backend/releases/tag/v5.27.1) verziója által támogatott legfrissebb `node.js` a 108-as (ezt a fájlnévben láthatjuk a `-node-` után következő számból). Megnézve [azt látjuk](https://nodejs.org/en/download/releases/), hogy a 108-as szám az a 18-as verzió, tehát ezt kell [telepítenünk](https://github.com/nodesource/distributions/blob/master/README.md) is:
 
-    curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash - &&\
-    sudo apt-get install -y nodejs
+```
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash - &&\
+sudo apt-get install -y nodejs
+```
 
 Ez után letöltjük az `osrm` csomagot a `node.js`-hez:
 
-    npm install osrm
+```
+npm install osrm
+```
 
 Ezen előkészületek után nekiállhatunk az OSRM telepítésének. Célszerű a legfrissebb [release-t](https://github.com/Project-OSRM/osrm-backend/releases) használni (a `https://github.com/Project-OSRM/osrm-backend.git` az éppen aktuális, fejlesztési verzió, ami lehet jóval kevésbé tesztelt), az aktuális helyzet esetében ez így néz ki:
 
-    wget https://github.com/Project-OSRM/osrm-backend/archive/refs/tags/v5.27.1.tar.gz
-    tar xzvf v5.27.1.tar.gz
-    cd osrm-backend-5.27.1/
-    mkdir -p build
-    cd build
-    cmake .. -DCMAKE_BUILD_TYPE=Release
-    cmake --build .
-    sudo cmake --build . --target install
-    cd ..
+```
+wget https://github.com/Project-OSRM/osrm-backend/archive/refs/tags/v6.0.0.tar.gz
+tar xzvf v6.0.0.tar.gz
+cd osrm-backend-6.0.0/
+mkdir -p build
+cd build
+cmake ..
+cmake --build .
+sudo cmake --build . --target install
+cd ..
+```
 
 Az útvonaltervezés gépidő- és memóriaigényes; elképzelhető, hogy swap fájl [beállítása](https://help.ubuntu.com/community/SwapFaq) is szükséges lesz a későbbiekhez.
 
@@ -799,47 +807,57 @@ Az útvonaltervezés gépidő- és memóriaigényes; elképzelhető, hogy swap f
 
 A térképet a Geofabrik [oldaláról](https://download.geofabrik.de/) tölthetjük le, egész Magyarország [egyben](https://download.geofabrik.de/europe/hungary.html) is elérhető:
 
-    wget https://download.geofabrik.de/europe/hungary-latest.osm.pbf
+```
+wget https://download.geofabrik.de/europe/hungary-latest.osm.pbf
+```
 
 Ezt követően néhány előfeldolgozási lépésre van szükség a térképen, hogy alkalmas legyen a későbbi útvonaltervezéshez (most a gépjármű-profilt használjuk, hiszen az egész vizsgálódás erről szól, de pontosan ugyanígy:
 
-    osrm-extract hungary-latest.osm.pbf -p ./profiles/car.lua
-    osrm-partition hungary-latest.osrm
-    osrm-customize hungary-latest.osrm
+```
+osrm-extract hungary-latest.osm.pbf -p ./profiles/car.lua
+osrm-partition hungary-latest.osrm
+osrm-customize hungary-latest.osrm
+```
 
 ### Az útvonaltervezés végrehajtása
 
 Ha mindezek megvannak, akkor elindíthatjuk az OSRM-et. A dolgot úgy kell elképzelni, hogy egy szervert indítunk el, ami folyamatosan várja a kéréseket (a megtervezendő útvonal paramétereit), és válaszként elküldi a megoldást. A szerver elindítása:
 
-    osrm-routed hungary-latest.osrm
+```
+osrm-routed hungary-latest.osrm
+```
 
 Ez már eleve egy jobb megoldás, hiszen egy helyi szervertől kérjük le a válaszokat, és nem interneten keresztül küldjük át. Valójában azonban nekünk ez sem lesz elég, mert még egy helyi szervernek [sem feltétlenül könnyű](https://github.com/Project-OSRM/osrm-backend/issues/2163) ekkora méretű útvonaltervezést végrehajtania. Éppen ezért egy teljesen más megoldást választunk: a szervert el sem kell indítani, e helyett [más módon](https://github.com/Project-OSRM/osrm-backend/blob/master/docs/nodejs/api.md), egy `node.js` szkript segítségével futtatjuk le az útvonaltervezést:
 
-    node osrmtable.js
+```
+node osrmtable.js
+```
 
 Itt az `osrmtable.js` tartalma:
 
-    const OSRM = require('osrm');
-    const osrm = new OSRM('hungary-latest.osrm');
-    const fs = require('fs');
-    const { convertCSVToArray } = require('convert-csv-to-array');
-    const { convertArrayToCSV } = require('convert-array-to-csv');
+```JavaScript
+const OSRM = require('osrm');
+const osrm = new OSRM('hungary-latest.osrm');
+const fs = require('fs');
+const { convertCSVToArray } = require('convert-csv-to-array');
+const { convertArrayToCSV } = require('convert-array-to-csv');
 
-    var coordinatesin = fs.readFileSync('locs.csv', 'utf8')
+var coordinatesin = fs.readFileSync('locs.csv', 'utf8')
 
-    coordinatesin = convertCSVToArray(coordinatesin, {
-        header : false,
-        type: 'array',
-        separator: ',',
-    });
+coordinatesin = convertCSVToArray(coordinatesin, {
+  header : false,
+  type: 'array',
+  separator: ',',
+});
 
-    osrm.table({
-        coordinates: coordinatesin,
-        annotations: ['duration', 'distance']
-    }, function(err, response) {
-        fs.writeFileSync('osrmdurations.csv', convertArrayToCSV(response.durations));
-        fs.writeFileSync('osrmdistances.csv', convertArrayToCSV(response.distances));
-    });
+osrm.table({
+  coordinates: coordinatesin,
+  annotations: ['duration', 'distance']
+}, function(err, response) {
+  fs.writeFileSync('osrmdurations.csv', convertArrayToCSV(response.durations));
+  fs.writeFileSync('osrmdistances.csv', convertArrayToCSV(response.distances));
+});
+```
 
 Ez a szkript egy `locs.csv` nevű fájlban várja a koordinátákat, majd az `osrmdurations.csv` és az `osrmdistances.csv` fájlokban adja vissza a megoldásokat (útvonalak idejei és távolságai minden pár között). Vigyázat, ez mindenképp időre van optimalizálva, tehát a távolság úgy értendő, hogy a legrövidebb idejű utak távolsága, nem úgy, hogy a legkisebb távolság.
 

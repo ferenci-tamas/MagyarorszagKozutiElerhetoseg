@@ -479,7 +479,7 @@ durationsSymmLong$Var2 <- as.character(levels(durationsSymmLong$Var2))[durations
 saveRDS(durationsSymmLong, "./data/durationsSymmLong.rds")
 fwrite(durationsLong, "./data/durationsLong.csv", dec = ",", sep = ";", bom = TRUE)
 if(!file.exists("./data/durationsLong.zip")) zip("./data/durationsLong.zip",
-                                                    "./data/durationsLong.csv")
+                                                 "./data/durationsLong.csv")
 knitr::kable(head(durationsLong))
 ```
 
@@ -624,23 +624,23 @@ contourplotter <- function(datain, geodatain, lab, telepules = NA, hascontour = 
   telepulescontour <- datain[, with(akima::interp(X, Y, value, nx = 1000, ny = 1000),
                                     cbind(data.table::CJ(Y = y, X = x), value = c(z))[!is.na(value)])]
   telepulescontour <- telepulescontour[sapply(sf::st_intersects(sf::st_as_sf(telepulescontour,
-                                                                     coords = c("X", "Y"),
-                                                                     crs = sf::st_crs(geodatain)),
-                                                            geodatain), length)==1]
+                                                                             coords = c("X", "Y"),
+                                                                             crs = sf::st_crs(geodatain)),
+                                                                geodatain), length)==1]
   
   telepulescontour2 <- datain[, with(akima::interp(X, Y, value, nx = 40, ny = 40),
                                      cbind(data.table::CJ(Y = y, X = x), value = c(z))[!is.na(value)])]
   telepulescontour2 <- telepulescontour2[sapply(sf::st_intersects(sf::st_as_sf(telepulescontour2,
-                                                                       coords = c("X", "Y"),
-                                                                       crs = sf::st_crs(geodatain)),
-                                                              geodatain), length)==1]
+                                                                               coords = c("X", "Y"),
+                                                                               crs = sf::st_crs(geodatain)),
+                                                                  geodatain), length)==1]
   
   ggplot2::ggplot(telepulescontour, ggplot2::aes(x = X, y = Y)) +
     ggplot2::geom_raster(ggplot2::aes(fill = value)) +
     {if(!is.na(telepules)) ggplot2::stat_sf_coordinates(data = geodatain[geodatain$NAME==telepules,],
-                                               inherit.aes = FALSE, color = "red")} +
+                                                        inherit.aes = FALSE, color = "red")} +
     {if(hascontour) metR::geom_contour2(data = telepulescontour2, ggplot2::aes(x = X, y = Y, z = value,
-                                                                      label = after_stat(level)),
+                                                                               label = after_stat(level)),
                                         inherit.aes = FALSE, breaks = 1:10, skip = 0, color = "red")} +
     ggplot2::labs(x = "", y = "", fill = lab, caption = captionlab, title = title) +
     {if(!is.null(filllims)) ggplot2::scale_fill_gradient(limits = filllims)} +
@@ -1439,7 +1439,7 @@ kkorhazplot <- function(result, k) {
     "Súlyozott eljutási idő,\nlegközelebbi kórház [h]", title = paste0(k, " kórházas megoldás"),
     filllims = c(0, 4))
   for(i in 1:k) p <- p + ggplot2::stat_sf_coordinates(data = geodata[geodata$NAME==optlocs[[k]][i],],
-                                             inherit.aes = FALSE, color = "red")
+                                                      inherit.aes = FALSE, color = "red")
   p
 }
 
@@ -2079,12 +2079,12 @@ használni (a `https://github.com/Project-OSRM/osrm-backend.git` az éppen
 aktuális, fejlesztési verzió, ami lehet jóval kevésbé tesztelt), az
 aktuális helyzet esetében ez így néz ki:
 
-    wget https://github.com/Project-OSRM/osrm-backend/archive/refs/tags/v5.27.1.tar.gz
-    tar xzvf v5.27.1.tar.gz
-    cd osrm-backend-5.27.1/
+    wget https://github.com/Project-OSRM/osrm-backend/archive/refs/tags/v6.0.0.tar.gz
+    tar xzvf v6.0.0.tar.gz
+    cd osrm-backend-6.0.0/
     mkdir -p build
     cd build
-    cmake .. -DCMAKE_BUILD_TYPE=Release
+    cmake ..
     cmake --build .
     sudo cmake --build . --target install
     cd ..
@@ -2132,27 +2132,29 @@ egy `node.js` szkript segítségével futtatjuk le az útvonaltervezést:
 
 Itt az `osrmtable.js` tartalma:
 
-    const OSRM = require('osrm');
-    const osrm = new OSRM('hungary-latest.osrm');
-    const fs = require('fs');
-    const { convertCSVToArray } = require('convert-csv-to-array');
-    const { convertArrayToCSV } = require('convert-array-to-csv');
+``` javascript
+const OSRM = require('osrm');
+const osrm = new OSRM('hungary-latest.osrm');
+const fs = require('fs');
+const { convertCSVToArray } = require('convert-csv-to-array');
+const { convertArrayToCSV } = require('convert-array-to-csv');
 
-    var coordinatesin = fs.readFileSync('locs.csv', 'utf8')
+var coordinatesin = fs.readFileSync('locs.csv', 'utf8')
 
-    coordinatesin = convertCSVToArray(coordinatesin, {
-        header : false,
-        type: 'array',
-        separator: ',',
-    });
+coordinatesin = convertCSVToArray(coordinatesin, {
+  header : false,
+  type: 'array',
+  separator: ',',
+});
 
-    osrm.table({
-        coordinates: coordinatesin,
-        annotations: ['duration', 'distance']
-    }, function(err, response) {
-        fs.writeFileSync('osrmdurations.csv', convertArrayToCSV(response.durations));
-        fs.writeFileSync('osrmdistances.csv', convertArrayToCSV(response.distances));
-    });
+osrm.table({
+  coordinates: coordinatesin,
+  annotations: ['duration', 'distance']
+}, function(err, response) {
+  fs.writeFileSync('osrmdurations.csv', convertArrayToCSV(response.durations));
+  fs.writeFileSync('osrmdistances.csv', convertArrayToCSV(response.distances));
+});
+```
 
 Ez a szkript egy `locs.csv` nevű fájlban várja a koordinátákat, majd az
 `osrmdurations.csv` és az `osrmdistances.csv` fájlokban adja vissza a
