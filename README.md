@@ -2047,33 +2047,14 @@ Az OSRM installálásának a részletei a projekt
 [Github-oldalán](https://github.com/Project-OSRM/osrm-backend?tab=readme-ov-file#building-from-source)
 és [Github
 wiki-jén](https://github.com/Project-OSRM/osrm-backend/wiki/Building-OSRM)
-címen elérhetőek. Tételesen, Ubuntu 22.04 alatt a következő parancsokat
+címen elérhetőek. Tételesen, Ubuntu 24.04 alatt a következő parancsokat
 kell lefuttatni:
 
     sudo apt install build-essential git cmake pkg-config \
     libbz2-dev libxml2-dev libzip-dev libboost-all-dev \
-    lua5.2 liblua5.2-dev libtbb-dev
+    lua5.2 liblua5.2-dev libtbb-dev npm
 
-Ezt követően szükség van a [node.js](https://nodejs.org/) környezet
-installálására is. Arra figyelni kell, hogy olyan verziót telepítsünk,
-ami összhangban van azzal, hogy az OSRM mit támogat. Például az OSRM
-[5.27.1-es](https://github.com/Project-OSRM/osrm-backend/releases/tag/v5.27.1)
-verziója által támogatott legfrissebb `node.js` a 108-as (ezt a
-fájlnévben láthatjuk a `-node-` után következő számból). Megnézve [azt
-látjuk](https://nodejs.org/en/download/releases/), hogy a 108-as szám az
-a 18-as verzió, tehát ezt kell
-[telepítenünk](https://github.com/nodesource/distributions/blob/master/README.md)
-is:
-
-    curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash - &&\
-    sudo apt-get install -y nodejs
-
-Ez után letöltjük az `osrm` csomagot a `node.js`-hez:
-
-    npm install osrm
-
-Ezen előkészületek után nekiállhatunk az OSRM telepítésének. Célszerű a
-legfrissebb
+Ezután nekiállhatunk az OSRM telepítésének. Célszerű a legfrissebb
 [release-t](https://github.com/Project-OSRM/osrm-backend/releases)
 használni (a `https://github.com/Project-OSRM/osrm-backend.git` az éppen
 aktuális, fejlesztési verzió, ami lehet jóval kevésbé tesztelt), az
@@ -2084,10 +2065,17 @@ aktuális helyzet esetében ez így néz ki:
     cd osrm-backend-6.0.0/
     mkdir -p build
     cd build
-    cmake ..
+    cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-14 -DCMAKE_C_COMPILER=gcc-14 -DCMAKE_CXX_FLAGS="-Wno-uninitialized"
     cmake --build .
     sudo cmake --build . --target install
     cd ..
+
+Végezetül ahhoz, hogy szkriptből is meg tudjuk hívni az OSRM-et,
+szükséges a `node.js` megfelelő beállítása is:
+
+    npm install @project-osrm/osrm
+    npm install convert-csv-to-array
+    npm install convert-array-to-csv
 
 Az útvonaltervezés gépidő- és memóriaigényes; elképzelhető, hogy swap
 fájl [beállítása](https://help.ubuntu.com/community/SwapFaq) is
@@ -2101,10 +2089,11 @@ tölthetjük le, egész Magyarország
 
     wget https://download.geofabrik.de/europe/hungary-latest.osm.pbf
 
-Ezt követően néhány előfeldolgozási lépésre van szükség a térképen, hogy
-alkalmas legyen a későbbi útvonaltervezéshez (most a gépjármű-profilt
-használjuk, hiszen az egész vizsgálódás erről szól, de pontosan
-ugyanígy:
+Ezt követően néhány [előfeldolgozási
+lépésre](https://github.com/Project-OSRM/osrm-backend/wiki/Running-OSRM)
+van szükség a térképen, hogy alkalmas legyen a későbbi
+útvonaltervezéshez (most a gépjármű-profilt használjuk, hiszen az egész
+vizsgálódás erről szól, de pontosan ugyanígy:
 
     osrm-extract hungary-latest.osm.pbf -p ./profiles/car.lua
     osrm-partition hungary-latest.osrm
@@ -2117,7 +2106,7 @@ elképzelni, hogy egy szervert indítunk el, ami folyamatosan várja a
 kéréseket (a megtervezendő útvonal paramétereit), és válaszként elküldi
 a megoldást. A szerver elindítása:
 
-    osrm-routed hungary-latest.osrm
+    osrm-routed --algorithm=MLD hungary-latest.osrm
 
 Ez már eleve egy jobb megoldás, hiszen egy helyi szervertől kérjük le a
 válaszokat, és nem interneten keresztül küldjük át. Valójában azonban
@@ -2133,8 +2122,8 @@ egy `node.js` szkript segítségével futtatjuk le az útvonaltervezést:
 Itt az `osrmtable.js` tartalma:
 
 ``` javascript
-const OSRM = require('osrm');
-const osrm = new OSRM('hungary-latest.osrm');
+const OSRM = require('@project-osrm/osrm');
+const osrm = new OSRM({algorithm: 'MLD', path: 'hungary-latest.osrm'});
 const fs = require('fs');
 const { convertCSVToArray } = require('convert-csv-to-array');
 const { convertArrayToCSV } = require('convert-array-to-csv');
@@ -2357,10 +2346,14 @@ solGLPK <- function(durs, k) {
   
   result <- Rglpk::Rglpk_solve_LP(
     obj = c(c(t(durs)), rep(0, n)),
-    mat = rbind(Matrix::sparseMatrix(i = rep(1:n, each = n), j = 1:(n*n), x = 1, dims = c(n, n*n + n)),
+    mat = rbind(Matrix::sparseMatrix(i = rep(1:n, each = n),
+                                     j = 1:(n*n), x = 1,
+                                     dims = c(n, n*n + n)),
                 cbind(Matrix::Diagonal(n*n, 1),
-                      Matrix::sparseMatrix(i = 1:(n*n), j = rep(1:n, n), x = -1)),
-                Matrix::sparseMatrix(i = rep(1, n), j = ((n*n)+1):(n*n + n), x = 1)),
+                      Matrix::sparseMatrix(i = 1:(n*n),
+                                           j = rep(1:n, n), x = -1)),
+                Matrix::sparseMatrix(i = rep(1, n),
+                                     j = ((n*n)+1):(n*n + n), x = 1)),
     dir = c(rep("==", n), rep("<=", n*n), "=="),
     rhs = c(rep(1, n), rep(0, n*n), k),
     bounds = list(lower = list(ind = 1:(n*n + n), val = rep(0, n*n + n)),
@@ -2391,10 +2384,14 @@ A kód:
 solLPSOLVE <- function(durs, k) {
   n <- nrow(durs)
   
-  mat1Sparse <- Matrix::sparseMatrix(i = rep(1:n, each = n), j = 1:(n*n), x = 1, dims = c(n, n*n + n))
+  mat1Sparse <- Matrix::sparseMatrix(i = rep(1:n, each = n),
+                                     j = 1:(n*n), x = 1,
+                                     dims = c(n, n*n + n))
   mat2Sparse <- cbind(Matrix::Diagonal(n*n, 1),
-                      Matrix::sparseMatrix(i = 1:(n*n), j = rep(1:n, n), x = -1))
-  mat3Sparse <- Matrix::sparseMatrix(i = rep(1, n), j = ((n*n)+1):(n*n + n), x = 1)
+                      Matrix::sparseMatrix(i = 1:(n*n),
+                                           j = rep(1:n, n), x = -1))
+  mat3Sparse <- Matrix::sparseMatrix(i = rep(1, n),
+                                     j = ((n*n)+1):(n*n + n), x = 1)
   
   Amat <- rbind(mat1Sparse, mat2Sparse, mat3Sparse)
   
@@ -2431,10 +2428,14 @@ solCBC <- function(durs, k) {
   
   result <- rcbc::cbc_solve(
     obj = c(c(t(durs)), rep(0, n)),
-    mat = rbind(Matrix::sparseMatrix(i = rep(1:n, each = n), j = 1:(n*n), x = 1, dims = c(n, n*n + n)),
+    mat = rbind(Matrix::sparseMatrix(i = rep(1:n, each = n),
+                                     j = 1:(n*n), x = 1,
+                                     dims = c(n, n*n + n)),
                 cbind(Matrix::Diagonal(n*n, 1),
-                      Matrix::sparseMatrix(i = 1:(n*n), j = rep(1:n, n), x = -1)),
-                Matrix::sparseMatrix(i = rep(1, n), j = ((n*n)+1):(n*n + n), x = 1)),
+                      Matrix::sparseMatrix(i = 1:(n*n),
+                                           j = rep(1:n, n), x = -1)),
+                Matrix::sparseMatrix(i = rep(1, n),
+                                     j = ((n*n)+1):(n*n + n), x = 1)),
     row_lb = c(rep(1, n), rep(-Inf, n*n), k),
     row_ub = c(rep(1, n), rep(0, n*n), k),
     col_ub = rep(1, n*n + n),
@@ -2469,10 +2470,14 @@ solHIGHS <- function(durs, k) {
     L = c(c(t(durs)), rep(0, n)),
     lower = rep(0, n*n + n),
     upper = rep(1, n*n + n),
-    A = rbind(Matrix::sparseMatrix(i = rep(1:n, each = n), j = 1:(n*n), x = 1, dims = c(n, n*n + n)),
+    A = rbind(Matrix::sparseMatrix(i = rep(1:n, each = n),
+                                   j = 1:(n*n), x = 1,
+                                   dims = c(n, n*n + n)),
               cbind(Matrix::Diagonal(n*n, 1),
-                    Matrix::sparseMatrix(i = 1:(n*n), j = rep(1:n, n), x = -1)),
-              Matrix::sparseMatrix(i = rep(1, n), j = ((n*n)+1):(n*n + n), x = 1)),
+                    Matrix::sparseMatrix(i = 1:(n*n),
+                                         j = rep(1:n, n), x = -1)),
+              Matrix::sparseMatrix(i = rep(1, n),
+                                   j = ((n*n)+1):(n*n + n), x = 1)),
     lhs = c(rep(1, n), rep(-Inf, n*n), k),
     rhs = c(rep(1, n), rep(0, n*n), k),
     types = rep("I", n*n + n), maximum = FALSE
@@ -2554,7 +2559,8 @@ ggplot(benchres1DF, aes(x = n, y = median, color = solver, group = interaction(s
 
 ![](README_files/figure-gfm/unnamed-chunk-53-1.png)<!-- -->
 
-Látszik, hogy az `lp_solve` eljárás érezhető lassabb mint a másik három.
+Látszik, hogy az `lp_solve` eljárás érezhetően lassabb mint a másik
+három.
 
 Vizsgáljuk meg a memóriaigényt is:
 
@@ -2566,8 +2572,8 @@ ggplot(benchres1DF, aes(x = n, y = memory, color = solver, group = interaction(s
 
 ![](README_files/figure-gfm/unnamed-chunk-54-1.png)<!-- -->
 
-Az `lp_solve` memóriaigénye valami egészen elmebeteg módon elszáll,
-tehát biztosan nem érdemes vele számolni a továbbiakban.
+Az `lp_solve` memóriaigénye valami egészen elborult módon elszáll, tehát
+biztosan nem érdemes vele számolni a továbbiakban.
 
 #### Második kör
 
